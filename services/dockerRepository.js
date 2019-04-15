@@ -64,6 +64,7 @@ function getImageByRepository(data) {
         .then(function (data) {
             info(`getImageByRepository: complete`);
             resolve({
+                name: tempDoc.name,
                 repository: tempDoc.repository,
                 isHttps: tempDoc.isHttps,
                 isAuth: tempDoc.isAuth,
@@ -111,7 +112,7 @@ function getTagByImage(data) {
         }
         else {
             info(`getTagByImage: complete`);
-            resolve({ results, errors });
+            resolve({ data, errors });
         }
     });
 }

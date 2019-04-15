@@ -16,6 +16,12 @@ var config = require('./config.js')
 var logger = require('./logger.js')
 var user = require('../collections/user.js')
 var auth = require('../middlewares/isAuth.js')  //  认证判断
+const repository = require('../collections/repository');
+const dockerImage = require('../collections/image');
+const dockerRepository = require('./dockerRepository');
+const {
+    dbException
+} = require('../class/exceptions');
 
 var sessionOption = {
     resave: true,  //  save the session to the session store
@@ -41,6 +47,38 @@ function startApp() {
     var app = express();
     connectToMongodb();
     initApp(app);
+    /**ready to update image collections */
+    repository.find({})
+    .then(function (docs) {
+        return new Promise(function (resolve, reject) {
+            docs.forEach(function (doc) {
+                dockerRepository.getImageByRepository(doc.repository)
+                .then(getTagByImage)
+                .then(function (data) {
+                    return new Promise(function (resolve, reject) {
+                        data.images.forEach(function (image) {
+                            image.tag.forEach(function (tag) {
+                                dockerImage.findOneAndUpdate({
+                                    repository: data.repository,
+                                    image: image.image,
+                                    tag: tag
+                                }, { $set: {
+                                    name: data.name,
+                                    repository: data.repository,
+                                    image: image.image,
+                                    tag: tag
+                                } }, { upsert: true, setDefaultsOnInsert: true })
+                                .then(function (data) { /**TODO */ })
+                                .catch(function (err) { warn(err) });
+                            });
+                        });
+                    });
+                })
+                .catch(function (err) { reject(err); });
+            });
+        });
+    })
+    .catch(function (err) { warn(err); });
     var server = http.Server(app);
     server.listen(app.get('port'), function () {
         logger.info('listen at port:' + app.get('port'));

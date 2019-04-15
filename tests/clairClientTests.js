@@ -1,4 +1,5 @@
 const Clair = require('clair-client');
+const { debug } = require('../services/logger');
 
 let clairOption = {
     clairAddress: 'http://192.168.10.112:6060',
@@ -9,14 +10,18 @@ let clairOption = {
 
 async function fun(clairOption) {
     const clair = new Clair(clairOption)
-    clair.analyze({ image: 'http://192.168.10.118:5000/ubuntu:16.04'})
+    clair.analyze({ image: 'https://registry-1.docker.io/ubuntu'})
     .then((data) => {
         console.log(data);
-        console.log(data.vulnerabilities[0])
+        console.log(data.vulnerabilities[0]);
     })
     .catch((error) => {
         console.log(error);
     })
 }
 
-fun(clairOption)
+fun(clairOption);
+
+// const common = require(`../node_modules/docker-registry-client/lib/common`);
+
+// debug(JSON.stringify(common.parseRepo(`jack777/defense-scanner`)));

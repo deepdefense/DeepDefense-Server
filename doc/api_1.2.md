@@ -97,7 +97,14 @@ ___
 ####  对应按钮: 容器镜像扫描-指定镜像
 ####  请求地址: http://api_server_ip:4000/api/scanner
 ####  请求方法: GET
-####  请求参数: NULL
+####  请求参数: JSON
+```json
+{
+    "repository": "192.168.3.118:5000",
+    "image": "ubuntu",
+    "tag": "16.04"
+}
+```
 ####  返回类型: JSON  
 ```json
 {
