@@ -1,8 +1,8 @@
-const dockerRepository = require('../services/dockerRepository');
-const repository = require('../collections/repository');
-const { info, error } = require('../services/logger');
-const { connectToMongodb } = require('../services/express');
-const dockerImage = require('../collections/image'); 
+const dockerRepository = require('../services/dockerRepository')
+const repository = require('../collections/repository')
+const { info, error } = require('../services/logger')
+const { connectToMongodb } = require('../services/express')
+const dockerImage = require('../collections/image')
 
 connectToMongodb()
 
@@ -35,9 +35,14 @@ connectToMongodb()
 //     tag: '16.04'
 // })
 
-// dockerImage.find({})
-// .then(function (data) { info(JSON.stringify(data)); })
-// .catch(function (err) { error(JSON.stringify(err)); });
+dockerImage
+  .find({})
+  .then(function(data) {
+    info(JSON.stringify(data))
+  })
+  .catch(function(err) {
+    error(JSON.stringify(err))
+  })
 
 // dockerRepository.clairAnalyze({
 //     repository: '192.168.10.118',
@@ -57,14 +62,13 @@ connectToMongodb()
 //     medium: 7,
 //     low: 20,
 //     negligible: 16,
-//     unknown: 0 
+//     unknown: 0
 // })
 // .then(function (data) { info(JSON.stringify(data)); })
 // .catch(function (err) { error(JSON.stringify(err.stack)); });
 
-dockerRepository.getImageByRepository({ repository: '192.168.10.118' })
-.then(dockerRepository.getTagByImage)
-.then(dockerRepository.analyzeImage)
-.then(function (data) { info(JSON.stringify(data)); })
-.catch(function (err) { error(JSON.stringify(err.stack)); });
-
+// dockerRepository.getImageByRepository({ repository: '192.168.10.118' })
+// .then(dockerRepository.getTagByImage)
+// .then(dockerRepository.analyzeImage)
+// .then(function (data) { info(JSON.stringify(data)); })
+// .catch(function (err) { error(JSON.stringify(err.stack)); });

@@ -1,3 +1,9 @@
-const { startApp } = require('./services/express');
+const { startApp } = require('./services/express')
 
-startApp();
+if (process.argv[2] && process.argv[2] == 'dev') {
+  process.env.NODE_ENV = 'dev'
+} else {
+  process.env.NODE_ENV = 'pro'
+}
+
+startApp()

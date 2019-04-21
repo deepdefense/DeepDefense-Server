@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-var config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json')).toString());
+let confPath = process.env.NODE_ENV == 'dev' ? path.join(__dirname, '../config.json') : '/etc/deepdefense/scannerConf.json';
+
+var config = process.env.NODE_ENV == 'dev' ? JSON.parse(fs.readFileSync(confPath).toString()).dev : JSON.parse(fs.readFileSync(confPath).toString()).pro;
 
 module.exports = config;
