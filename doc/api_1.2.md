@@ -95,8 +95,8 @@ ___
 ___
 ####  功能: 获取指定仓库中指定镜像的信息
 ####  对应按钮: 容器镜像扫描-指定镜像
-####  请求地址: http://api_server_ip:4000/api/scanner
-####  请求方法: GET
+####  请求地址: http://api_server_ip:4000/api/scanner/detail
+####  请求方法: POST
 ####  请求参数: JSON
 ```json
 {
@@ -143,7 +143,7 @@ ___
 		"size": 5  //  [number] 分页大小
 	},
 	"sort": {
-		"field": "created_at",  //  [string] 排序索引, 默认created_at, created|cveID
+		"field": "created_at",  //  [string] 排序索引, 默认created_at, created_at|cveID|level
 		"order": "asc"  //  [string] 升序/降序, asc|dasc
 	},
 	"search": []  //  [array of string] 搜索关键词, 如果无, 则为空数组

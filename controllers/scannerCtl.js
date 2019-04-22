@@ -21,11 +21,7 @@ function getPage(req, res) {
   let sortOption = {}
   sortOption[field] = order
   dockerImage
-    .find(
-      and
-        ? { $and: and, repository: req.body.repository }
-        : { repository: req.body.repository }
-    )
+    .find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository })
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -51,13 +47,7 @@ function getPage(req, res) {
       }
       resSuc(res, {
         docs,
-        count: await dockerImage
-          .find(
-            and
-              ? { $and: and, repository: req.body.repository }
-              : { repository: req.body.repository }
-          )
-          .count()
+        count: await dockerImage.find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository }).count()
       })
     })
 }
@@ -102,12 +92,20 @@ function getImagePage(req, res) {
   let sortOption = {}
   sortOption[field] = order
   dockerVulnerability
-    .find({
-      repository: req.body.repository,
-      image: req.body.image,
-      tag: req.body.tag
-    })
-    // .find(and ? { $and: and } : {})
+    .find(
+      and
+        ? {
+            $and: and,
+            repository: req.body.repository,
+            image: req.body.image,
+            tag: req.body.tag
+          }
+        : {
+            repository: req.body.repository,
+            image: req.body.image,
+            tag: req.body.tag
+          }
+    )
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -139,7 +137,20 @@ function getImagePage(req, res) {
             image: req.body.image,
             tag: req.body.tag
           })
-          .find(and ? { $and: and } : {})
+          .find(
+            and
+              ? {
+                  $and: and,
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
+              : {
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
+          )
           .count()
       })
     })

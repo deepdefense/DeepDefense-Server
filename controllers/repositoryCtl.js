@@ -1,4 +1,5 @@
 const repository = require('../collections/repository')
+const dockerImage = require('../collections/image')
 const dockerRepository = require('../services/dockerRepository')
 const { debug, info, warn, error } = require('../services/logger')
 const { resSuc, resErr } = require('../services/common')
@@ -68,10 +69,11 @@ function testRepository(req, res) {
  * req.body: { repository, port, username, passwd, isAuth, isHttps }
  */
 function addRepository(req, res) {
-  if (req.body.port <= 0) {
+  if (req.body.port && req.body.port <= 0) {
     resErr(res, new paramsException(`port illegal`))
     return
   }
+  let repositoryClone = new Object()
   repository
     .findOne({ repository: req.body.repository })
     .then(
@@ -95,9 +97,9 @@ function addRepository(req, res) {
       }
     )
     .then(dockerRepository.testRepository)
-    .then(function(data) {
+    .then(data => {
       return new Promise(function(resolve, reject) {
-        let repositoryClone = JSON.parse(JSON.stringify(req.body))
+        repositoryClone = JSON.parse(JSON.stringify(req.body))
         if (!repositoryClone.port) {
           delete repositoryClone.port
         }
@@ -111,38 +113,80 @@ function addRepository(req, res) {
           delete repositoryClone.isHttps
         }
         repositoryClone.isConnect = data
-        debug(JSON.stringify(repositoryClone))
+        // debug(JSON.stringify(repositoryClone))
         repository
           .create(repositoryClone)
-          .then(
-            function(data) {
-              info(`DB: compelete`)
-              resolve(data)
-            },
-            function(err) {
-              throw new dbException(err)
+          .then(function(data) {
+            info(`DB: compelete`)
+            if (repositoryClone.isConnect) {
+              resolve(repositoryClone)
+            } else {
+              reject(new Error(`cannot connect`))
             }
-          )
-          .catch(function(err) {
-            reject(err)
           })
+          .catch(err => {
+            reject(new dbException(err))
+          })
+      })
+    })
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        info(`addRepository: complete`)
+        resSuc(res, data)
+        if (data.isConnect) {
+          debug(JSON.stringify(data))
+          resolve(data)
+        } else {
+          reject(new Error(`cannot connect`))
+        }
       })
     })
     .then(dockerRepository.getImageByRepository)
     .then(dockerRepository.getTagByImage)
     .then(data => {
-      // data.
-      return new Promise((resolve, reject) => {
-        resolve()
+      data = data.data
+      data.images.forEach(image => {
+        image.tags.forEach(tag => {
+          let doc = {
+            repository: `${data.repository}:${data.port}`,
+            image: image.image,
+            tag: tag,
+            namespace: ``,
+            high: -1,
+            medium: -1,
+            low: -1,
+            negligible: -1,
+            unknown: -1,
+            score: -1
+          }
+          dockerImage
+            .findOneAndUpdate(
+              {
+                repository: `${data.repository}:${data.port}`,
+                image: image.image,
+                tag: tag
+              },
+              {
+                $setOnInsert: doc
+              },
+              { upsert: true }
+            )
+            .then(data => {
+              info(`DB: complete`)
+            })
+            .catch(err => {
+              warn(err)
+            })
+        })
       })
     })
-    .then(function(data) {
-      info(`addRepository: complete`)
-      resSuc(res, data)
-    })
-    .catch(function(err) {
-      warn(`addRepository: fail`)
-      resErr(res, err)
+    .catch(err => {
+      if (err.message != `cannot connect`) {
+        warn(err)
+      } else {
+        info(`addRepository: complete`)
+        resSuc(res, repositoryClone)
+      }
     })
 }
 
@@ -186,30 +230,85 @@ function setRepository(req, res) {
     resErr(res, new paramsException(`port illegal`))
     return
   }
-  repository
-    .findOneAndUpdate({ repository: req.body.repository }, { $set: req.body })
-    .then(
-      function(doc) {
-        return new Promise(function(resolve, reject) {
-          info(`DB: complete`)
-          if (doc) {
-            resolve(doc)
-          } else {
-            throw new dbException(`No ${req.body.repository}, cannot remove`)
-          }
-        })
-      },
-      function(error) {
-        throw new dbException(error)
-      }
-    )
-    .then(function(data) {
-      info(`setRepository: complete`)
-      resSuc(res, data)
+  dockerRepository
+    .testRepository(req.body)
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        req.body.isConnect = data
+        resolve(req.body)
+      })
     })
-    .catch(function(error) {
-      warn(`setRepository: fail`)
-      resErr(res, error)
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        repository
+          .findOneAndUpdate({ repository: req.body.repository }, { $set: data }, { upsert: true, new: true })
+          .then(doc => {
+            info(`DB: complete`)
+            if (doc && doc.isConnect) {
+              resolve(doc)
+            } else if (doc && !doc.isConnect) {
+              reject(new Error(`cannot connect`))
+            } else {
+              reject(new dbException(`No ${data.repository}, cannot set`))
+            }
+          })
+          .catch(err => {
+            reject(new dbException(err))
+          })
+      })
+    })
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        info(`setRepository: complete`)
+        resSuc(res, data)
+        resolve(data)
+      })
+    })
+    .then(data => {
+      data = data.data
+      data.images.forEach(image => {
+        image.tags.forEach(tag => {
+          let doc = {
+            repository: `${data.repository}:${data.port}`,
+            image: image.image,
+            tag: tag,
+            namespace: ``,
+            high: -1,
+            medium: -1,
+            low: -1,
+            negligible: -1,
+            unknown: -1,
+            score: -1
+          }
+          dockerImage
+            .findOneAndUpdate(
+              {
+                repository: `${data.repository}:${data.port}`,
+                image: image.image,
+                tag: tag
+              },
+              {
+                $setOnInsert: doc
+              },
+              { upsert: true, new: true }
+            )
+            .then(data => {
+              info(`DB: complete`)
+            })
+            .catch(err => {
+              warn(err)
+            })
+        })
+      })
+    })
+    .catch(err => {
+      if (err.message == 'cannot connect') {
+        info(`setRepository: complete`)
+        resSuc(res, req.body)
+      } else {
+        warn(`setRepository: fail`)
+        resErr(res, err)
+      }
     })
 }
 

@@ -260,7 +260,7 @@ function clairAnalyze(data) {
       .then(function(doc) {
         return new Promise(function(resolve, reject) {
           let { host, port } = config.clair
-          let clairOption = { clairAddress: `${host}:${port}` }
+          let clairOption = { clairAddress: `${host}:${port}`, dockerInsecure: !doc.isHttps }
           if (doc.isAuth) {
             clairOption.dockerUsername = doc.username
             clairOption.dockerPassword = doc.passwd
