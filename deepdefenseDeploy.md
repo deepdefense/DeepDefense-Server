@@ -4,6 +4,7 @@
 - logPath: /var/deepdefense/...
   - scanner: scannerLog/
   - portal: portalLog/
+
 ```shell
 sudo mkdir /etc/deepdefense
 sudo mkdir -p /var/deepdefense/scannerLog /var/deepdefense/portalLog
@@ -31,6 +32,7 @@ sudo mkdir -p $SRC/clair/clair_config
 - node(image)
 - clair(image)
 - postgres(image)
+
 ```shell
 sudo docker image pull node:8.15.1-stretch
 sudo docker image pull mongo
@@ -45,6 +47,7 @@ sudo git clone http://192.168.3.2/DeepDefense/scanner.git (master)
 ```
 ####  init && build docker image
 - scanner
+
 ```shell
 cd $SRC/scanner && sudo docker build -t scanner:1.2.0 .
 ```
@@ -70,6 +73,7 @@ EXPOSE 4001
 #CMD [ "node", "app.js" ]
 ```
 - porttal
+
 ```shell
 cd $SRC/portal && npm run build
 sudo docker build -t deepdefense-portal:1.2.0 .
@@ -93,6 +97,7 @@ EXPOSE 5001
 #CMD [ "node", "app.js" ]
 ```
 - registry
+
 ```shell
 # $SRC/registry: image location
 sudo mkdir -p $SRC/registry/auth && sudo mkdir $SRC/registry/config
