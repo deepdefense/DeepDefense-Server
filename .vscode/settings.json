@@ -3,8 +3,6 @@
   "editor.detectIndentation": false,
   "editor.formatOnSave": true,
   "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
-  "eslint.autoFixOnSave": true,
-  "eslint.validate": ["javascript"],
   "prettier.eslintIntegration": true,
   "prettier.semi": false,
   "prettier.singleQuote": true,

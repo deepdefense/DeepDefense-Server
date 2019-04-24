@@ -76,26 +76,22 @@ function addRepository(req, res) {
   let repositoryClone = new Object()
   repository
     .findOne({ repository: req.body.repository })
-    .then(
-      function(doc) {
-        return new Promise(function(resolve, reject) {
-          if (doc) {
-            throw new dbException(`${req.body.repository} already existed, cannot add`)
-          } else {
-            if (!req.body.isHttps) {
-              req.body.isHttps = false
-            }
-            if (!req.body.port) {
-              req.body.port = 5000
-            }
-            resolve(req.body)
+    .then(doc => {
+      return new Promise((resolve, reject) => {
+        if (doc) {
+          reject(new dbException(`${req.body.repository} already existed, cannot add`))
+          return
+        } else {
+          if (!req.body.isHttps) {
+            req.body.isHttps = false
           }
-        })
-      },
-      function(err) {
-        throw new dbException(err)
-      }
-    )
+          if (!req.body.port) {
+            req.body.port = 5000
+          }
+          resolve(req.body)
+        }
+      })
+    })
     .then(dockerRepository.testRepository)
     .then(data => {
       return new Promise(function(resolve, reject) {
@@ -144,48 +140,60 @@ function addRepository(req, res) {
     .then(dockerRepository.getImageByRepository)
     .then(dockerRepository.getTagByImage)
     .then(data => {
-      data = data.data
-      data.images.forEach(image => {
-        image.tags.forEach(tag => {
-          let doc = {
-            repository: `${data.repository}:${data.port}`,
-            image: image.image,
-            tag: tag,
-            namespace: ``,
-            high: -1,
-            medium: -1,
-            low: -1,
-            negligible: -1,
-            unknown: -1,
-            score: -1
-          }
-          dockerImage
-            .findOneAndUpdate(
-              {
-                repository: `${data.repository}:${data.port}`,
-                image: image.image,
-                tag: tag
-              },
-              {
-                $setOnInsert: doc
-              },
-              { upsert: true }
-            )
-            .then(data => {
-              info(`DB: complete`)
-            })
-            .catch(err => {
-              warn(err)
-            })
+      return new Promise((resolve, reject) => {
+        data = data.data
+        data.images.forEach(image => {
+          image.tags.forEach(tag => {
+            let doc = {
+              repository: `${data.repository}:${data.port}`,
+              image: image.image,
+              tag: tag,
+              namespace: ``,
+              high: -1,
+              medium: -1,
+              low: -1,
+              negligible: -1,
+              unknown: -1,
+              score: -1
+            }
+            dockerImage
+              .findOneAndUpdate(
+                {
+                  repository: `${data.repository}:${data.port}`,
+                  image: image.image,
+                  tag: tag
+                },
+                {
+                  $setOnInsert: doc
+                },
+                { upsert: true }
+              )
+              .then(() => {
+                info(`DB: complete`)
+                resolve({ data, errors: [] })
+              })
+              .catch(err => {
+                warn(err)
+              })
+          })
         })
       })
     })
+    .then(dockerRepository.analyzeImage)
     .catch(err => {
-      if (err.message != `cannot connect`) {
-        warn(err)
-      } else {
+      if (err.message == `cannot connect`) {
         info(`addRepository: complete`)
         resSuc(res, repositoryClone)
+      } else if (err.message.indexOf('already existed') > -1) {
+        warn(err)
+        res.json({
+          code: 1,
+          data: null,
+          message: `${err}`
+        })
+      } else {
+        warn(err)
+        resErr(res, err)
       }
     })
 }
@@ -264,7 +272,10 @@ function setRepository(req, res) {
         resolve(data)
       })
     })
+    .then(dockerRepository.getImageByRepository)
+    .then(dockerRepository.getTagByImage)
     .then(data => {
+      debug(JSON.stringify(data))
       data = data.data
       data.images.forEach(image => {
         image.tags.forEach(tag => {

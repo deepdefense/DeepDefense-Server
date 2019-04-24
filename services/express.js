@@ -19,6 +19,7 @@ const conf = require('../collections/config')
 var auth = require('../middlewares/isAuth.js') //  认证判断
 const repository = require('../collections/repository')
 const dockerImage = require('../collections/image')
+const vulnerability = require('../collections/vulnerability')
 const dockerRepository = require('./dockerRepository')
 const timedScan = require('./timedScan')
 const { dbException } = require('../class/exceptions')
@@ -48,69 +49,197 @@ function startApp() {
   connectToMongodb()
   initApp(app)
   /**ready to update image collections */
-  setInterval(function() {
-    timedScan
-      .needScan()
-      .then(function(data) {
-        return new Promise((resolve, rejecrt) => {
-          if (data) {
-            conf
+  setInterval(() => {
+    repository
+      .find({ isConnect: true })
+      .then(repoDocs => {
+        repoDocs.forEach(repoDoc => {
+          dockerRepository
+            .getImageByRepository({ repository: repoDoc.repository })
+            .then(dockerRepository.getTagByImage)
+            .then(data => {
+              data = data.data
+              //  add new image:tag
+              data.images.forEach(image => {
+                image.tags.forEach(tag => {
+                  dockerImage
+                    .findOneAndUpdate(
+                      {
+                        repository: `${data.repository}:${data.port}`,
+                        image: image.image,
+                        tag: tag
+                      },
+                      {
+                        $setOnInsert: {
+                          repository: `${data.repository}:${data.port}`,
+                          image: image.image,
+                          tag: tag,
+                          isEnable: true
+                        }
+                      },
+                      {
+                        upsert: true,
+                        new: true,
+                        setDefaultsOnInsert: true
+                      }
+                    )
+                    .then(doc => {
+                      //TODO
+                      //   debug(`${doc.repository}/${doc.image}:${doc.tag} update`)
+                    })
+                    .catch(err => {
+                      warn(err.stack)
+                    })
+                })
+              })
+              //  remove unexited image:tag
+              let imageList = []
+              for (let image of data.images) {
+                imageList.push(image.image)
+              }
+              //   debug(JSON.stringify(imageList))
+              dockerImage
+                .find({ repository: `${data.registory}:${data.port}` })
+                .then(docs => {
+                  docs.forEach(doc => {
+                    if (!(imageList.indexOf(doc.image) > -1) || (imageList.indexOf(doc.image) > -1 && !data.images[imageList.indexOf(doc.image)].tags.indexOf(doc.tag) > -1)) {
+                      dockerImage
+                        .deleteOne(doc)
+                        .then(data => {
+                          //TODO
+                          //   debug(`${doc.repository}/${doc.image}:${doc.tag} delete`)
+                        })
+                        .catch(err => {
+                          warn(err.stack)
+                        })
+                    }
+                  })
+                })
+                .catch(err => {
+                  warn(err.stack)
+                })
+            })
+        })
+      })
+      .catch(err => {
+        warn(err.stack)
+      })
+  }, 1000 * 10)
+  setInterval(() => {
+    dockerImage.find({ score: -1, isEnable: true }).then(docs => {
+      docs.forEach(doc => {
+        repository
+          .findOne({
+            repository: doc.repository.split(':')[0]
+          })
+          .then(repoDoc => {
+            return new Promise(resolve => {
+              resolve({
+                repository: repoDoc.repository,
+                port: repoDoc.port,
+                username: repoDoc.username,
+                passwd: repoDoc.passwd,
+                isHttps: repoDoc.isHttps,
+                isAuth: repoDoc.isAuth,
+                image: doc.image,
+                tag: doc.tag
+              })
+            })
+          })
+          .then(dockerRepository.clairAnalyze)
+          .then(analyzeResult => {
+            // debug(JSON.stringify(analyzeResult.result))
+            dockerImage
               .findOneAndUpdate(
                 {
-                  key: 'TIMEDSCAN'
+                  repository: analyzeResult.result.repository,
+                  image: analyzeResult.result.image,
+                  tag: analyzeResult.result.tag
                 },
                 {
                   $set: {
-                    config: {
-                      lastScan: parseInt(new Date().getTime()),
-                      interval: 1000 * 60 * 60 * 24
-                    }
+                    namespace: analyzeResult.result.namespace ? analyzeResult.result.namespace : '',
+                    high: analyzeResult.result.high,
+                    medium: analyzeResult.result.medium,
+                    low: analyzeResult.result.low,
+                    negligible: analyzeResult.result.negligible,
+                    unknown: analyzeResult.result.unknown,
+                    score: analyzeResult.result.score,
+                    isEnable: true
                   }
-                }
+                },
+                { overwrite: true, new: true }
               )
               .then(data => {
-                if (data) {
-                  resolve()
-                } else {
-                  throw new dbException(`No timed scan config`)
-                }
+                // TODO
+                // debug(`updateONe`)
+                // debug(JSON.stringify(data))
               })
               .catch(err => {
-                warn(err)
+                warn(err.stack)
               })
-          } else {
-            throw new Error(`nothing to do`)
-          }
-        })
-      })
-      .then(function() {
-        repository
-          .find({})
-          .then(function(docs) {
-            if (docs.length > 0) {
-              docs.forEach(function(doc) {
-                dockerRepository
-                  .getImageByRepository(doc.repository)
-                  .then(dockerRepository.getTagByImage)
-                  .then(dockerRepository.analyzeImage)
-                  .catch(function(err) {
-                    warn(err)
-                  })
+            vulnerability
+              .deleteMany({
+                repository: analyzeResult.result.repository,
+                image: analyzeResult.result.image,
+                tag: analyzeResult.result.getTagByImage
               })
-            }
+              .then(data => {
+                analyzeResult.vulnerabilities.forEach(function(vul) {
+                  vulnerability
+                    .create({
+                      repository: analyzeResult.result.repository,
+                      image: analyzeResult.result.image,
+                      tag: analyzeResult.result.tag,
+                      cveId: vul.Name,
+                      description: vul.Description,
+                      link: vul.Link,
+                      level: vul.Severity,
+                      type: vul.VulName,
+                      versionFormat: vul.VersionFormat,
+                      version: vul.Version
+                    })
+                    .then(function(doc) {
+                      //   debug('vulnerability save')
+                    })
+                    .catch(function(err) {
+                      //   warn('vulnerability save fail')
+                    })
+                })
+              })
+              .catch(err => {
+                warn(err.stack)
+              })
           })
-          .catch(function(err) {
-            throw new dbException(err)
+          .catch(err => {
+            warn(err.stack)
+            dockerImage
+              .findOneAndUpdate(
+                {
+                  repository: doc.repository,
+                  image: doc.image,
+                  tag: doc.tag
+                },
+                {
+                  $set: {
+                    isEnable: false
+                  }
+                },
+                { overwirte: true, new: true }
+              )
+              .then(data => {
+                // TODO
+                // debug(`disableOne`)
+                // debug(JSON.stringify(data))
+              })
+              .catch(err => {
+                warn(123)
+                warn(err.stack)
+              })
           })
       })
-      .catch(function(err) {
-        if (err.message !== `nothing to do`) {
-          warn(err)
-        } else {
-          debug(`fresh check`)
-        }
-      })
-  }, 1000 * 60)
+    })
+  }, 1000 * 10)
   var server = http.Server(app)
   server.listen(app.get('port'), function() {
     info('listen at port:' + app.get('port'))
@@ -146,8 +275,7 @@ function initApp(app) {
   // 添加response header, 解决跨域问题
   app.use(require('../middlewares/resHeader'))
 
-  // app.use('/auth', require('./routers/index.js'));  // 认证
-  //   app.use('/', express.static('../'))
+  app.use('/api/auth', require('../routers/index.js')) // 认证
   app.use(express.static(path.join(__dirname, '/../public')))
   app.use('/static', express.static(path.join(__dirname, '/../public')))
   app.use('/api/repository', auth, require('../routers/repositoryRouter'))

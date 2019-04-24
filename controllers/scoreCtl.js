@@ -30,7 +30,7 @@ function getScore(req, res) {
 
 function setScore(req, res) {
   conf
-    .findOneAndUpdate({ key: 'SCORE' }, { $set: { config: req.body } })
+    .findOneAndUpdate({ key: 'SCORE' }, { $set: { config: req.body } }, { new: true })
     .then(function(doc) {
       return new Promise(function(resolve, reject) {
         info(`DB: complete`)
@@ -49,18 +49,10 @@ function setScore(req, res) {
         .then(function(docs) {
           if (docs.length > 0) {
             docs.forEach(function(doc) {
-              if (
-                !(
-                  doc.high == -1 &&
-                  doc.medium == -1 &&
-                  doc.low == -1 &&
-                  doc.negligible == -1 &&
-                  doc.unknown == -1
-                )
-              ) {
+              if (!(doc.high == -1 && doc.medium == -1 && doc.low == -1 && doc.negligible == -1 && doc.unknown == -1)) {
                 let score = (sum = 0)
                 for (let level of levels) {
-                  score += doc[level] * req.body[level]
+                  score += doc[level] * (data[level] / data['low'])
                   sum += doc[level]
                 }
                 dockerImage
@@ -72,7 +64,7 @@ function setScore(req, res) {
                     },
                     {
                       $set: {
-                        score: score / (doc.config.high * sum)
+                        score: score / 100
                       }
                     }
                   )
@@ -82,14 +74,14 @@ function setScore(req, res) {
                     }
                   })
                   .catch(function(err) {
-                    warn(err)
+                    warn(err.stack)
                   })
               }
             })
           }
         })
         .catch(function(err) {
-          warn(err)
+          warn(err.stack)
         })
       return new Promise(function(resolve, reject) {
         resolve(req.body)

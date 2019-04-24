@@ -1,6 +1,10 @@
 const io = require('socket.io')()
 const { debug, info, warn, error } = require('./logger')
 
-module.exports = io.on('connection', function(Client) {
-  info()
+io.sockets.on('connection', function(Client) {
+  info(Client.request.connection.remoteAddress)
 })
+
+// io.listen(4001)
+
+module.exports = io

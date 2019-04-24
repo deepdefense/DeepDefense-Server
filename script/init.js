@@ -28,21 +28,33 @@ mongoose.connection
 
 // let defaultuser = {}
 
-// user.deleteMany({})
-//   .then(() => {
-//     return new Promise((resolve, reject) => {
-//       user.create(defaultuser)
-//         .then(doc => {
-//           resolve(doc)
-//         })
-//         .catch(err => {
-//           reject(err)
-//         })
-//     })
-//   })
-//   .catch(err => {
-//     error(err)
-//   })
+user
+  .deleteMany({})
+  .then(() => {
+    return new Promise((resolve, reject) => {
+      user
+        .register(
+          {
+            username: 'admin',
+            role: 'admin'
+          },
+          'admin123'
+        )
+        .then(data => {
+          if (data) {
+            info(`user init`)
+          } else {
+            throw new Error(`user init fail`)
+          }
+        })
+        .catch(err => {
+          error(err)
+        })
+    })
+  })
+  .catch(err => {
+    error(err)
+  })
 
 conf
   .deleteMany({ key: 'TIMEDSCAN' })
@@ -81,11 +93,11 @@ conf
           key: 'SCORE',
           description: 'score right config',
           config: {
-            high: 5,
+            high: 8,
             medium: 4,
-            low: 3,
-            negligible: 2,
-            unknown: 0
+            low: 1,
+            negligible: 0.2,
+            unknown: 0.1
           }
         })
         .then(doc => {
