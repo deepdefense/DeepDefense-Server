@@ -2,12 +2,12 @@
   "dev": {
     "auth": false,
     "port": {
-      "http": 4000
+      "http": 4003
     },
-    "database": "mongodb://192.168.10.118/deepdefense_dev",
+    "database": "mongodb://192.168.10.118/deepdefense",
     "front": {
       "url": "http://192.168.10.118",
-      "socket": 4001
+      "socket": 4002
     },
     "log": {
       "consoleLevel": "debug",
@@ -27,7 +27,7 @@
     "database": "mongodb://192.168.10.118/deepdefense",
     "front": {
       "url": "http://192.168.10.118",
-      "socket": 4001
+      "socket": 4002
     },
     "log": {
       "consoleLevel": "debug",

@@ -1,9 +1,5 @@
-# Nodejs
-#
-# VERSION  1.2.0
-
 FROM node:8.15.1-stretch
-LABEL version="1.2.0" \
+LABEL version="2.0.3" \
     description="this is deepscanner server. listen on 4000"
 
 
@@ -15,4 +11,4 @@ RUN npm audit fix --force && npm install && npm cache clean --force
 EXPOSE 4000
 EXPOSE 4001
 
-#CMD [ "node", "app.js" ]
+CMD [ "node", "--max-old-space-size=1024", "--max-semi-space-size=1024", "app.js" ]

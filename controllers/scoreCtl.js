@@ -8,7 +8,8 @@ const { dbException } = require('../class/exceptions')
 function getScore(req, res) {
   conf
     .findOne({ key: 'SCORE' })
-    .then(function(doc) {
+    .then(doc => {
+      debug(JSON.stringify(doc))
       return new Promise(function(resolve, reject) {
         info(`DB: complete`)
         if (doc) {

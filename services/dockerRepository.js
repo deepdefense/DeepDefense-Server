@@ -215,7 +215,6 @@ function analyzeImage(data) {
                 tag: analyzeResult.result.tag
               })
               .then(function() {
-                debug('vulnerability remove')
                 analyzeResult.vulnerabilities.forEach(function(vul) {
                   dockerVulnerability
                     .create({
@@ -290,9 +289,11 @@ function clairAnalyze(data) {
           const clair = new Clair(clairOption)
           const image = `${doc.isHttps ? 'https' : 'http'}://${data.repository}:${data.port}/${data.image}:${data.tag}`
           // debug(image);
+          debug(JSON.stringify(image))
           clair
             .analyze({ image })
             .then(async function(analyzeResult) {
+              debug('vulnerability remove')
               result = {
                 repository: `${data.repository}:${data.port}`,
                 image: data.image,

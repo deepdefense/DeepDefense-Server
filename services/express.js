@@ -240,16 +240,111 @@ function startApp() {
       })
     })
   }, 1000 * 10)
+  setInterval(() => {
+    repository
+      .find()
+      .then(docs => {
+        docs.forEach(doc => {
+          dockerImage.find({ repository: `${doc.repository}:${doc.port}`, isEnable: false }).then(images => {
+            images.forEach(image => {
+              dockerImage
+                .clairAnalyze({
+                  repository: doc.repoDoc,
+                  port: doc.port,
+                  username: doc.username,
+                  passwd: doc.passwd,
+                  isHttps: doc.isHttps,
+                  isAuth: doc.isAuth,
+                  image: image.image,
+                  tag: image.tag
+                })
+                .then(function(analyzeResult) {
+                  dockerImage
+                    .findOneAndUpdate(
+                      {
+                        repository: analyzeResult.result.repository,
+                        image: analyzeResult.result.image,
+                        tag: analyzeResult.result.tag
+                      },
+                      {
+                        $set: {
+                          namespace: analyzeResult.result.namespace ? analyzeResult.result.namespace : '',
+                          high: analyzeResult.result.high,
+                          medium: analyzeResult.result.medium,
+                          low: analyzeResult.result.low,
+                          negligible: analyzeResult.result.negligible,
+                          unknown: analyzeResult.result.unknown,
+                          score: analyzeResult.result.score,
+                          isEnable: true
+                        }
+                      },
+                      { upsert: true, setDefaultsOnInsert: true, new: true }
+                    )
+                    .then(function(doc) {
+                      if (doc) {
+                        info('io: send a fresh')
+                        io.on('connection', function(client) {
+                          client.emit('news', 'one image analyze complete')
+                        })
+                        //   io.on('news', `one image analyze complete`)
+                      } else {
+                        throw new dbException('No such data')
+                      }
+                    })
+                    .catch(function(err) {
+                      warn(`${data.repository}:${data.port}/${image.image}:${tag} save fail: ${err}`)
+                    })
+
+                  dockerVulnerability
+                    .deleteMany({
+                      repository: analyzeResult.result.repository,
+                      image: analyzeResult.result.image,
+                      tag: analyzeResult.result.tag
+                    })
+                    .then(function() {
+                      analyzeResult.vulnerabilities.forEach(function(vul) {
+                        dockerVulnerability
+                          .create({
+                            repository: analyzeResult.result.repository,
+                            image: analyzeResult.result.image,
+                            tag: analyzeResult.result.tag,
+                            cveId: vul.Name,
+                            description: vul.Description,
+                            link: vul.Link,
+                            level: vul.Severity,
+                            type: vul.VulName,
+                            versionFormat: vul.VersionFormat,
+                            version: vul.Version
+                          })
+                          .then(function(doc) {
+                            debug('vulnerability save')
+                          })
+                          .catch(function(err) {
+                            warn('vulnerability save fail')
+                          })
+                      })
+                    })
+                    .catch(function(err) {
+                      warn('vulnerability remove fail')
+                    })
+                })
+                .catch(function(err) {
+                  warn(`${data.repository}:${data.port}/${image.image}:${tag} analyze fail: ${err}`)
+                })
+            })
+          })
+        })
+      })
+      .catch(err => {
+        warn(err.stack)
+      })
+  }, 1000 * 60 * 60 * 24)
   var server = http.Server(app)
   server.listen(app.get('port'), function() {
     info('listen at port:' + app.get('port'))
   })
 }
 
-/**
- * inie app
- * @param {express()} app
- */
 function initApp(app) {
   app.set('port', config.port.http)
   // load body parse middleware
@@ -276,8 +371,8 @@ function initApp(app) {
   app.use(require('../middlewares/resHeader'))
 
   app.use('/api/auth', require('../routers/index.js')) // 认证
-  app.use(express.static(path.join(__dirname, '/../public')))
-  app.use('/static', express.static(path.join(__dirname, '/../public')))
+  //   app.use(express.static(path.join(__dirname, '/../public')))
+  //   app.use('/static', express.static(path.join(__dirname, '/../public')))
   app.use('/api/repository', auth, require('../routers/repositoryRouter'))
   app.use('/api/scanner', auth, require('../routers/scannerRouter'))
   app.use('/api/score', auth, require('../routers/scoreRouter'))

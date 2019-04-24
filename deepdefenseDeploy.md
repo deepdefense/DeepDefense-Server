@@ -37,7 +37,8 @@ sudo mkdir -p $SRC/clair/clair_config
 sudo docker image pull node:8.15.1-stretch
 sudo docker image pull mongo
 sudo docker image pull postgres:9.6
-sudo docker image pull quay.io/coreos/clair:v2.0.8
+git clone https://github.com/coreos/clair.git
+cd clair && git reset --hard 
 sudo docker image pull registry
 sudo docker tag quay.io/coreos/clair:v2.0.8 deepdefense-scanner:v2.0.8
 sudo docker tag mongo deepfense-db:latest
@@ -60,7 +61,7 @@ cd $SRC/scanner && sudo docker build -t scanner:1.2.0 .
 
 FROM node:8.15.1-stretch
 LABEL version="1.2.0" \
-      description="this is deepscanner server. listen on 4000-4001"
+      description="this is scanner server. listen on 4000-4001"
 
 
 RUN mkdir -p /usr/src/app/
@@ -85,7 +86,7 @@ sudo docker build -t deepdefense-portal:1.2.0 .
 
 FROM node:8.15.1-stretch
 LABEL version="1.2.0" \
-    description="this is deepscanner server. listen on 5001"
+    description="this is portal server. listen on 5001"
 
 
 RUN mkdir -p /usr/src/app/
@@ -139,5 +140,5 @@ sudo docker run -it deepscanner:1.2.0 /bin/bash
 > node scripts/init.js
 > exit
 sudo docker run --restart=always --name scanner -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner:1.2.0 node --max-old-space-size=1024 --max-semi-space-size=1024 app.js
-sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:1.2.0 node --max-old-space-size=1024 --max-semi-space-size=1024 app.js
+sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:1.2.2
 ```

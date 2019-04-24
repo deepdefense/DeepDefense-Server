@@ -79,8 +79,7 @@ function addRepository(req, res) {
     .then(doc => {
       return new Promise((resolve, reject) => {
         if (doc) {
-          reject(new dbException(`${req.body.repository} already existed, cannot add`))
-          return
+          throw new dbException(`${req.body.repository} already existed, cannot add`)
         } else {
           if (!req.body.isHttps) {
             req.body.isHttps = false
@@ -219,6 +218,18 @@ function removeRepository(req, res) {
         throw new dbException(error)
       }
     )
+    .then(doc => {
+      dockerImage
+        .deleteMany({
+          repository: `${doc.repository}:${doc.port}`
+        })
+        .then(data => {
+          debug(`remove ${doc.repository}:${doc.port} images: complete`)
+        })
+        .catch(err => {
+          warn(`remove ${doc.repository}:${doc.port} images: faile`)
+        })
+    })
     .then(function(data) {
       info(`removeRepository: complete`)
       resSuc(res, data)

@@ -12,19 +12,12 @@ const { dbException, paramsException } = require('../class/exceptions')
 function getPage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
-  let and = null
-  //   if (req.body.search !== '') {
-  //     req.body.search = req.body.search
-  //       .trim()
-  //       .replace(/\:/, ' ')
-  //       .split(' ')
-  //     and =
-  //       req.body.search && req.body.search.length !== 0
-  //         ? req.body.search.map(function(key) {
-  //             return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
-  //           })
-  //         : null
-  //   }
+  let and =
+    req.body.search && req.body.search.length !== 0
+      ? req.body.search.map(function(key) {
+          return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
+        })
+      : null
   let sortOption = {}
   sortOption[field] = order
   dockerImage
@@ -90,19 +83,12 @@ function getImage(req, res) {
 function getImagePage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
-  let and = null
-  //   if (req.body.search !== '') {
-  //     req.body.search = req.body.search
-  //       .trim()
-  //       .replace(/\:/, ' ')
-  //       .split(' ')
-  //     and =
-  //       req.body.search && req.body.search.length !== 0
-  //         ? req.body.search.map(function(key) {
-  //             return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
-  //           })
-  //         : null
-  //   }
+  let and =
+    req.body.search && req.body.search.length !== 0
+      ? req.body.search.map(function(key) {
+          return { cveId: { $regex: key } }
+        })
+      : null
   let sortOption = {}
   sortOption[field] = order
   dockerVulnerability

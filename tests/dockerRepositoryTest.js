@@ -56,7 +56,7 @@ connectToMongodb()
 //   })
 
 // repository
-//   .find()
+//   .find({ repository: '192.168.10.117' })
 //   .then(docs => {
 //     info(JSON.stringify(docs))
 //   })
@@ -87,52 +87,52 @@ connectToMongodb()
 // .then(function (data) { info(JSON.stringify(data)); })
 // .catch(function (err) { error(JSON.stringify(err.stack)); });
 
-// dockerRepository
-//   .getImageByRepository({ repository: '192.168.10.117' })
-//   .then(dockerRepository.getTagByImage)
-//   //   .then(dockerRepository.analyzeImage)
-//   .then(data => {
-//     data = data.data
-//     //  add new image:tag
-//     data.images.forEach(image => {
-//       image.tags.forEach(tag => {
-//         dockerImage
-//           .findOneAndUpdate(
-//             {
-//               repository: `${data.repository}:${data.port}`,
-//               image: image.image,
-//               tag: tag
-//             },
-//             {
-//               $setOnInsert: {
-//                 repository: `${data.repository}:${data.port}`,
-//                 image: image.image,
-//                 tag: tag,
-//                 isEnable: true
-//               }
-//             },
-//             {
-//               upsert: true,
-//               new: true,
-//               setDefaultsOnInsert: true
-//             }
-//           )
-//           .then(doc => {
-//             //TODO
-//             debug(`${doc.repository}/${doc.image}:${doc.tag} update`)
-//           })
-//           .catch(err => {
-//             warn(err.stack)
-//           })
-//       })
-//     })
-//   })
-//   .then(function(data) {
-//     info(JSON.stringify(data))
-//   })
-//   .catch(function(err) {
-//     error(JSON.stringify(err.stack))
-//   })
+dockerRepository
+  .getImageByRepository({ repository: '192.168.10.119' })
+  .then(dockerRepository.getTagByImage)
+  .then(dockerRepository.analyzeImage)
+  //   .then(data => {
+  //     data = data.data
+  //     //  add new image:tag
+  //     data.images.forEach(image => {
+  //       image.tags.forEach(tag => {
+  //         dockerImage
+  //           .findOneAndUpdate(
+  //             {
+  //               repository: `${data.repository}:${data.port}`,
+  //               image: image.image,
+  //               tag: tag
+  //             },
+  //             {
+  //               $setOnInsert: {
+  //                 repository: `${data.repository}:${data.port}`,
+  //                 image: image.image,
+  //                 tag: tag,
+  //                 isEnable: true
+  //               }
+  //             },
+  //             {
+  //               upsert: true,
+  //               new: true,
+  //               setDefaultsOnInsert: true
+  //             }
+  //           )
+  //           .then(doc => {
+  //             //TODO
+  //             debug(`${doc.repository}/${doc.image}:${doc.tag} update`)
+  //           })
+  //           .catch(err => {
+  //             warn(err.stack)
+  //           })
+  //       })
+  //     })
+  //   })
+  .then(function(data) {
+    info(JSON.stringify(data))
+  })
+  .catch(function(err) {
+    error(JSON.stringify(err.stack))
+  })
 
 // repository
 //   //   .deleteMany({ repository: '' })
@@ -162,17 +162,17 @@ connectToMongodb()
 //     error(JSON.stringify(err.stack))
 //   })
 
-dockerImage
-  .find({ $and: [{ repository: '192.168.10.117:5000' }, { isEnable: true }] })
-  .then(function(data) {
-    info(JSON.stringify(data))
-    data.forEach(dat => {
-      info(dat.isEnable)
-    })
-  })
-  .catch(function(err) {
-    error(JSON.stringify(err.stack))
-  })
+// dockerImage
+//   .find({ $and: [{ repository: '192.168.10.119:5000' }] })
+//   .then(function(data) {
+//     info(JSON.stringify(data))
+//     data.forEach(dat => {
+//       info(dat.isEnable)
+//     })
+//   })
+//   .catch(function(err) {
+//     error(JSON.stringify(err.stack))
+//   })
 
 // dockerImage
 //   .deleteMany({ repository: '192.168.10.117:5000' })

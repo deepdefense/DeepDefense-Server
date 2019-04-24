@@ -1,0 +1,28 @@
+version: '2'
+services:
+  
+
+  deepdefense-scanner:
+    image: deepdefense-scanner:v2.0.8
+    restart: always
+    depends_on:
+      - deepdefense-cve
+    volumens:
+      - './ '
+    ports:
+      - '6060-6061:6060-6061'
+    command: -config=/config/config.yaml
+
+  deepdefense-portal:
+
+
+  deepdefense-cve:
+  
+  deepdefense-db:
+
+  scanner:
+    image: scanner:1.2.3
+      restart: always
+      depends_on:
+        - deepdefense-db
+        - deepdefense-scanner
