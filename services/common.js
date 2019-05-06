@@ -3,8 +3,8 @@ const zlib = require('zlib')
 const { debug, warn } = require('./logger')
 
 /**data: { url, username, passwd, isAuth } */
-function get(data) {
-  return new Promise(function(resolve, reject) {
+function get (data) {
+  return new Promise(function (resolve, reject) {
     let headers = {
       Accept: 'text/html, application/xhtml+xml, */*',
       'Accept-Language': 'zh-CN',
@@ -25,13 +25,13 @@ function get(data) {
       }
     }
 
-    request.get(option, function(err, response, data) {
+    request.get(option, function (err, response, data) {
       // debug(`statusCode: ${response !== null ? response.statusCode : null }`);
       if (!err && response.statusCode === 200) {
         let buffer = new Buffer(data)
         let encoding = response.headers['content-encoding']
         if (encoding == 'gzip') {
-          zlib.gunzip(buffer, function(err, decoded) {
+          zlib.gunzip(buffer, function (err, decoded) {
             if (err) {
               reject(`unzip error ${err}`)
             }
@@ -41,7 +41,7 @@ function get(data) {
             }
           })
         } else if (encoding == 'deflate') {
-          zlib.inflate(buffer, function(err, decoded) {
+          zlib.inflate(buffer, function (err, decoded) {
             if (err) {
               reject(`deflate error ${err}`)
             }
@@ -61,7 +61,7 @@ function get(data) {
   })
 }
 
-function resSuc(res, data) {
+function resSuc (res, data) {
   debug(`response.data: ${JSON.stringify(data)}`)
   res.statusCode = 200
   res.json({
@@ -71,7 +71,7 @@ function resSuc(res, data) {
   })
 }
 
-function resErr(res, error) {
+function resErr (res, error) {
   warn(`response.errorStack: ${JSON.stringify(error.stack)}`)
   res.statusCode = 500
   res.json({
@@ -84,5 +84,5 @@ function resErr(res, error) {
 module.exports = {
   resSuc,
   resErr,
-  get
+  get,
 }

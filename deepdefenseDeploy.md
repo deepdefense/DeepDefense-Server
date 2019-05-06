@@ -129,16 +129,26 @@ threshold: 3
 ```
 ###  start container
 ```shell
-# sudo docker run -d -p 5000:5000 --restart=always -v $SRC/registry/config/:/etc/docker/registry/ -v $SRC/registry/auth/:/auth/ -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry  Realm" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v $SRC/registry/:/var/lib/registry/ registry
-sudo docker run --restart=always -d -p 5000:5000 -v $SRC/registry/:/var/lib/registry/ registry
-sudo docker run --restart=always --name deepdefense-db -d -p 27017:27017 deepfense-db:latest
-sudo docker run --restart=always --name deepdefense-cve -d -e POSTRES_PASSWD="" -p 5432:5432 deepdefense-cve:9.6
 #SRC must be Absolute path
+#mongodb local test
+#sudo docker run --restart=always --name deepdefense-db -d -p 27018:27017 deepfense-db:4.0.9
+#mongodb
+sudo docker run --restart=always --name deepdefense-db -d -p 27017:27017 deepfense-db:4.0.9
+
+#postgres
+sudo docker run --restart=always --name deepdefense-cve -d -e POSTRES_PASSWD="" -p 5432:5432 deepdefense-cve:9.6
+
+#registry with auth
+# sudo docker run -d -p 5000:5000 --restart=always -v $SRC/registry/config/:/etc/docker/registry/ -v $SRC/registry/auth/:/auth/ -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry  Realm" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v $SRC/registry/:/var/lib/registry/ registry
+#registry
+sudo docker run --restart=always -d -p 5000:5000 -v $SRC/registry/:/var/lib/registry/ registry
+
+#clair
 sudo docker run --restart=always --name deepdefense-scanner --net=host -d -p 6060-6061:6060-6061 -v $SRC/clair/clair_config:/config deepdefense-scanner:v2.0.8 -config=/config/config.yaml
-#init db
-sudo docker run -it deepscanner:1.2.0 /bin/bash
-> node scripts/init.js
-> exit
+
+#scanner-api-server
 sudo docker run --restart=always --name scanner -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner:1.2.0 node --max-old-space-size=1024 --max-semi-space-size=1024 app.js
+
+#portal
 sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:1.2.2
 ```

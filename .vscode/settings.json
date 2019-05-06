@@ -2,11 +2,14 @@
   "git.ignoreLimitWarning": true,
   "editor.detectIndentation": false,
   "editor.formatOnSave": true,
-  "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
-  "prettier.eslintIntegration": true,
-  "prettier.semi": false,
-  "prettier.singleQuote": true,
-  "prettier.tslintIntegration": true,
+  "editor.tabSize": 2,
+  "eslint.autoFixOnSave": true,
   "prettier.tabWidth": 2,
-  "prettier.printWidth": 200
+  "prettier.eslintIntegration": true,
+  //去掉代码结尾的分号
+  "prettier.semi": false,
+  //使用带引号替代双引号
+  "prettier.singleQuote": true,
+  //让函数(名)和后面的括号之间加个空格
+  "javascript.format.insertSpaceBeforeFunctionParenthesis": true
 }

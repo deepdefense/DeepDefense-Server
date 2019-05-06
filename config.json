@@ -4,9 +4,8 @@
     "port": {
       "http": 4003
     },
-    "database": "mongodb://192.168.10.118/deepdefense",
+    "database": "mongodb://192.168.3.124:27018/deepdefense",
     "front": {
-      "url": "http://192.168.10.118",
       "socket": 4002
     },
     "log": {
@@ -26,7 +25,6 @@
     },
     "database": "mongodb://192.168.10.118/deepdefense",
     "front": {
-      "url": "http://192.168.10.118",
       "socket": 4002
     },
     "log": {
