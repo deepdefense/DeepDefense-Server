@@ -23,6 +23,7 @@ const vulnerability = require('../collections/vulnerability')
 const dockerRepository = require('./dockerRepository')
 const timedScan = require('./timedScan')
 const { dbException } = require('../class/exceptions')
+const common = require('./common')
 
 var sessionOption = {
   resave: true, //  save the session to the session store
@@ -372,11 +373,10 @@ function connectToMongodb () {
       // server: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
       // replset: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
       useNewUrlParser: true,
-      /** can use findOneAndUpdate or findOneAndRemove */
-      useFindAndModify: false
+      useFindAndModify: false // can use findOneAndUpdate or findOneAndRemove
     }
     debug(config.database)
-    var connct = mongoose.connect(config.database.toString(), options)
+    var connct = mongoose.connect(common.getMongoDBUrl(), options)
   }
 
   connect() // connect to the mongodb

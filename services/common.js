@@ -1,6 +1,7 @@
 const request = require('request')
 const zlib = require('zlib')
 const { debug, warn } = require('./logger')
+const config = require('./config')
 
 /**data: { url, username, passwd, isAuth } */
 function get (data) {
@@ -81,8 +82,18 @@ function resErr (res, error) {
   })
 }
 
+const getMongoDBUrl = () => {
+  return `mongodb://${config.database.ip}:${config.database.port}/deepdefense`
+}
+
+const getScannerUrl = () => {
+  return `http://${config.scanner.ip}:${config.scanner.port}`
+}
+
 module.exports = {
   resSuc,
   resErr,
   get,
+  getMongoDBUrl,
+  getScannerUrl
 }

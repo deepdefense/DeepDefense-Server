@@ -278,8 +278,7 @@ function clairAnalyze (data) {
   return new Promise(function (resolve, reject) {
     repository.findOne({ repository: data.repository }).then(function (doc) {
       return new Promise(function (resolve, reject) {
-        const { host, port } = config.clair
-        const clairOption = { clairAddress: `${host}:${port}`, dockerInsecure: !doc.isHttps }
+        const clairOption = { clairAddress: common.getScannerUrl(), dockerInsecure: !doc.isHttps }
         if (doc.isAuth) {
           clairOption.dockerUsername = doc.username
           clairOption.dockerPassword = doc.passwd

@@ -1,28 +1,51 @@
-version: '2'
+#instand of $SRC with absolute path
+version: "2"
 services:
-  
+  deepdefense-db:
+    image: deepdefense-db:4.0.9
+    container_name: deepdefense-db
+    restart: always
+    ports:
+      - "27017:27017"
+
+  deepdefense-cve:
+    image: deepdefense-cve:9.6
+    container_name: deepdefense-cve
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTRES_PASSWD=""
 
   deepdefense-scanner:
-    image: deepdefense-scanner:v2.0.8
+    image: deepdefense-scanner:2.0
+    container_name: deepdefense-scanner
     restart: always
     depends_on:
       - deepdefense-cve
-    volumens:
-      - './ '
+    volumes:
+      - "/home/guyi/deepdefense-scanner/config:/config"
     ports:
-      - '6060-6061:6060-6061'
+      - "6060-6061:6060-6061"
     command: -config=/config/config.yaml
 
+  scanner-api-server:
+    image: scanner-api-server:2.0.3
+    container_name: scanner-api-server
+    restart: always
+    depends_on:
+      - deepdefense-db
+      - deepdefense-scanner
+    volumes:
+      - "/etc/deepdefense:/etc/deepdefense"
+    ports:
+      - "4000-4001:4000-4001"
+
   deepdefense-portal:
-
-
-  deepdefense-cve:
-  
-  deepdefense-db:
-
-  scanner:
-    image: scanner:1.2.3
-      restart: always
-      depends_on:
-        - deepdefense-db
-        - deepdefense-scanner
+    image: deepdefense-portal:v2.1
+    container_name: deepdefense-portal
+    restart: always
+    depends_on:
+      - scanner-api-server
+    ports:
+      - "4002:5001"
