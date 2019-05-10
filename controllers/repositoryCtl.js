@@ -134,8 +134,20 @@ const addRepository = (req, res) => {
     /**get repository's image list if could connect */
     .then(dockerRepository.getImageByRepository)
     .then(dockerRepository.getTagByImage)
-    .then(dockerRepository.saveImagesToDB)
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        saveImages(dockerRepository.formatResponse(data))
+          .then(() => {
+            resolve(data)
+          })
+          .catch(err => {
+            reject(err)
+          })
+      })
+    })
     .then(dockerRepository.analyzeImage)
+    .then(dockerRepository.removeVulnerabilities)
+    .then(dockerRepository.saveVulnerabilities)
     .then(data => { resSuc(res, data) })
     .catch(err => {
       if (err.message == `cannot connect`) {

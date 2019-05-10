@@ -1,10 +1,38 @@
+const mongoose = require('mongoose')
 const request = require('request')
 const zlib = require('zlib')
-const { debug, warn } = require('./logger')
+const { debug, info, warn, error } = require('./logger')
 const config = require('./config')
 
+/**
+ * connecte to the mongodb
+ */
+const connectToMongodb = () => {
+  const connect = () => {
+    var options = {
+      // server: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
+      // replset: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
+      useNewUrlParser: true,
+      useFindAndModify: false // enable use findOneAndUpdate or findOneAndRemove
+    }
+    return connct = mongoose.connect(getMongoDBUrl(), options)
+  }
+
+  mongoose.connection
+    .on('error', err => {
+      error(err)
+    })
+    .on('disconnected', () => {
+      connect() // reconnect to the mongodb
+    })
+    .on('open', () => {
+      info(`connect to the ${getMongoDBUrl()}`)
+    })
+  return connect() // connect to the mongodb
+}
+
 /**data: { url, username, passwd, isAuth } */
-function get (data) {
+const get = (data) => {
   return new Promise(function (resolve, reject) {
     let headers = {
       Accept: 'text/html, application/xhtml+xml, */*',
@@ -62,7 +90,7 @@ function get (data) {
   })
 }
 
-function resSuc (res, data) {
+const resSuc = (res, data) => {
   debug(`response.data: ${JSON.stringify(data)}`)
   res.statusCode = 200
   res.json({
@@ -72,7 +100,7 @@ function resSuc (res, data) {
   })
 }
 
-function resErr (res, error) {
+const resErr = (res, error) => {
   warn(`response.errorStack: ${JSON.stringify(error.stack)}`)
   res.statusCode = 500
   res.json({
@@ -91,6 +119,7 @@ const getScannerUrl = () => {
 }
 
 module.exports = {
+  connectToMongodb,
   resSuc,
   resErr,
   get,

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node app dev",
+    "dev": "node --max-old-space-size=1024 --max-semi-space-size=1024 app dev",
+    "start": "node --max-old-space-size=1024 --max-semi-space-size=1024 app",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint ."
   },

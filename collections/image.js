@@ -3,18 +3,17 @@ const { Schema } = mongoose
 
 var image = new Schema(
   {
-    name: { type: String, require: true, trim: true },
-    repository: { type: String, require: true, default: '', trim: true },
-    image: { type: String, require: true, default: '', trim: true },
-    tag: { type: String, require: true, default: '', trim: true },
-    namespace: { type: String, default: '' },
-    high: { type: Number, default: -1 },
-    medium: { type: Number, default: -1 },
-    low: { type: Number, default: -1 },
-    negligible: { type: Number, default: -1 },
-    unknown: { type: Number, default: -1 },
-    score: { type: Number, default: -1 },
-    isEnable: { type: Boolean, default: true }
+    repository: { type: String, require: true, default: '', trim: true },  //  repository ip:port
+    image: { type: String, require: true, default: '', trim: true },  //  image name
+    tag: { type: String, require: true, default: '', trim: true },  //  image tag
+    namespace: { type: String, default: '' },  //  image namespace(OS)
+    high: { type: Number, default: -1 },  //  num of high risk vulnerability
+    medium: { type: Number, default: -1 },  //  num of medium risk vulnerability
+    low: { type: Number, default: -1 },  //  num of low risk vulnerability
+    negligible: { type: Number, default: -1 },  //  num of negligible risk vulnerability
+    unknown: { type: Number, default: -1 },  //  num of unknown risk vulnerability
+    score: { type: Number, default: -1 },  //  security score
+    isEnable: { type: Boolean, default: true }  //  could analyze or not
   },
   {
     timestamps: {

@@ -97,7 +97,7 @@ threshold: 3
 #registry with auth
 # sudo docker run -d -p 5000:5000 --restart=always -v $SRC/registry/config/:/etc/docker/registry/ -v $SRC/registry/auth/:/auth/ -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry  Realm" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v $SRC/registry/:/var/lib/registry/ registry
 #registry
-sudo docker run --restart=always -d -p 5000:5000 -v $SRC/registry/:/var/lib/registry/ registry
+sudo docker run --restart=always -d -p 5000:5000 -v $SRC/registry/:/var/lib/registry/ -e REGISTRY_STORAGE_DELETE_ENABLED="true" registry
 
 #SRC must be Absolute path
 #mongodb local test
@@ -112,8 +112,8 @@ sudo docker run --restart=always --name deepdefense-cve -d -e POSTRES_PASSWD="" 
 sudo docker run --restart=always --name deepdefense-scanner -d -p 6060-6061:6060-6061 -v /etc/deepdefense:/config deepdefense-scanner:2.0 -config=/config/deepdefense-scanner-config.yaml
 
 #scanner-api-server
-sudo docker run --restart=always --name scanner -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner:1.2.0 node --max-old-space-size=1024 --max-semi-space-size=1024 app.js
+sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner-api-server:2.0.3
 
 #portal
-sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:1.2.2
+sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1
 ```

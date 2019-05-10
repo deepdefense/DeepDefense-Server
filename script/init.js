@@ -1,32 +1,10 @@
-const mongoose = require('mongoose')
 const config = require('../services/config')
 const user = require('../collections/user')
 const conf = require('../collections/config')
+const express = require('../services/express')
 const { debug, info, error, warn } = require('../services/logger')
 
-function connect() {
-  let options = {
-    // server: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
-    // replset: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
-    useNewUrlParser: true
-  }
-  debug(config.database)
-  let connct = mongoose.connect(config.database.toString(), options)
-}
-
-connect() // connect to the mongodb
-mongoose.connection
-  .on('error', err => {
-    error(err)
-  })
-  .on('disconnected', () => {
-    connect() // reconnect to the mongodb
-  })
-  .on('open', () => {
-    info('connect to the ' + config.database.toString())
-  })
-
-// let defaultuser = {}
+express.connectToMongodb()
 
 user
   .deleteMany({})
