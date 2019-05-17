@@ -1,6 +1,6 @@
 FROM node:8.15.1-stretch
-LABEL version="2.0.3" \
-    description="this is deepscanner server. listen on 4000"
+LABEL version="v2.0.3" \
+  description="this is deepscanner server. listen on 4000"
 
 
 RUN mkdir -p /usr/src/app/
