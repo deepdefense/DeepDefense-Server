@@ -52,6 +52,26 @@ sudo git clone http://192.168.3.2/DeepDefense/scanner.git (master)
 sudo git clone http://192.168.3.2/DeepDefense/portal.git (master)
 ```
 ####  init && build docker image
+-  claire
+-  vim Dockerfile
+```dockerfile
+FROM golang:1.10-alpine
+
+VOLUME /config
+EXPOSE 6060 6061
+
+ADD .   /go/src/github.com/coreos/clair/
+WORKDIR /go/src/github.com/coreos/clair/
+
+RUN apk add --no-cache git rpm xz && \
+    export CLAIR_VERSION=$(git describe --always --tags --dirty) && \
+    go install -ldflags "-X github.com/coreos/clair/pkg/version.Version=$CLAIR_VERSION" -v github.com/coreos/clair/cmd/clair && \
+    mv /go/bin/clair /deepdefense-scanner && \
+    rm -rf /go /usr/local/go
+
+ENTRYPOINT ["/deepdefense-scanner"]
+```
+sudo docker build -t deepdefense-scanner:v2.0
 - scanner
 ```shell
 cd $SRC/scanner && sudo docker build -t scanner-api-server:1.2.0 .
@@ -115,5 +135,5 @@ sudo docker run --restart=always --name deepdefense-scanner -d -p 6060-6061:6060
 sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner-api-server:2.0.3
 
 #portal
-sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1
+sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1 
 ```

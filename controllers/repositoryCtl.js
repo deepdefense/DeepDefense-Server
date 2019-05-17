@@ -76,6 +76,7 @@ function testRepository (req, res) {
  * }
  */
 const addRepository = (req, res) => {
+  let repositoryClone = {}
   /**params check */
   if (!req.body.repository || !isRepositoryLegal(req.body.repository)) {
     resErr(res, new paramsException(`repository illegal`))
@@ -110,6 +111,7 @@ const addRepository = (req, res) => {
     .then(isConnect => {
       return new Promise(function (resolve, reject) {
         req.body.isConnect = isConnect
+        repositoryClone = req.body
         resolve(req.body)
       })
     })
@@ -134,21 +136,21 @@ const addRepository = (req, res) => {
     /**get repository's image list if could connect */
     .then(dockerRepository.getImageByRepository)
     .then(dockerRepository.getTagByImage)
-    .then(data => {
-      return new Promise((resolve, reject) => {
-        saveImages(dockerRepository.formatResponse(data))
-          .then(() => {
-            resolve(data)
-          })
-          .catch(err => {
-            reject(err)
-          })
-      })
+    .then(async data => {
+      let images = dockerRepository.formatResponse(data)
+      for (let image of images) {
+        try {
+          await dockerRepository.saveImage(image)
+        } catch (err) {
+          warn(err.stack)
+        }
+      }
+      resSuc(res, data)
+      dockerRepository.analyzeImage(data)
+        .catch(err => {
+          warn(err.stack)
+        })
     })
-    .then(dockerRepository.analyzeImage)
-    .then(dockerRepository.removeVulnerabilities)
-    .then(dockerRepository.saveVulnerabilities)
-    .then(data => { resSuc(res, data) })
     .catch(err => {
       if (err.message == `cannot connect`) {
         info(`addRepository: complete`)
@@ -170,8 +172,8 @@ const addRepository = (req, res) => {
 /**
  * req.query: { registry }
  */
-function removeRepository (req, res) {
-  repository
+const removeRepository = (req, res) => {
+  Repository
     .findOneAndRemove({ repository: req.query.repository })
     .then(
       function (doc) {
@@ -210,11 +212,7 @@ function removeRepository (req, res) {
     })
 }
 
-/**
- * req.query: { registry }
- * req.body: { port, username, passwd, isAuth }
- */
-function setRepository (req, res) {
+const setRepository = (req, res) => {
   if (req.body.port <= 0) {
     resErr(res, new paramsException(`port illegal`))
     return
@@ -224,12 +222,12 @@ function setRepository (req, res) {
     .then(data => {
       return new Promise((resolve, reject) => {
         req.body.isConnect = data
-        resolve(req.body)
+        ressudoolve(req.body)
       })
     })
     .then(data => {
       return new Promise((resolve, reject) => {
-        repository
+        Repository
           .findOneAndUpdate({ repository: req.body.repository }, { $set: data }, { upsert: true, new: true })
           .then(doc => {
             info(`DB: complete`)

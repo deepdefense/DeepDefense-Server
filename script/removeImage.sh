@@ -23,4 +23,7 @@ function remove () {
 
 remove $REPOSITORY $IMAGE $TAG
 
+#remove image matedata from repository
+#docker exec -it registry  /bin/registry garbage-collect  /etc/docker/registry/config.yml
+
 exit 1

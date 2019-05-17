@@ -1,8 +1,19 @@
 const mongoose = require('mongoose')
+const pg = require('pg')
+const { Pool, Client } = pg
 const request = require('request')
 const zlib = require('zlib')
+const path = require('path')
 const { debug, info, warn, error } = require('./logger')
 const config = require('./config')
+
+var pool = new Pool({
+  user: 'postgres',
+  host: getPgsqlUrl(),
+  database: 'postgres',
+  password: '',
+  port: getPgsqlPort(),
+})
 
 /**
  * connecte to the mongodb
@@ -29,6 +40,13 @@ const connectToMongodb = () => {
       info(`connect to the ${getMongoDBUrl()}`)
     })
   return connect() // connect to the mongodb
+}
+
+const connectToPgsql = () => {
+  pool.connection
+
+  pool.on()
+  return pool
 }
 
 /**data: { url, username, passwd, isAuth } */
@@ -114,15 +132,36 @@ const getMongoDBUrl = () => {
   return `mongodb://${config.database.ip}:${config.database.port}/deepdefense`
 }
 
+const getPgsqlUrl = () => {
+  return config.cve.ip
+}
+
+const getPgsqlPort = () => {
+  return config.cve.port
+}
+
 const getScannerUrl = () => {
   return `http://${config.scanner.ip}:${config.scanner.port}`
 }
 
+const getMonitorConfPath = () => {
+  return path.join(__dirname, '../config/falco.yaml')
+}
+
+const getMonitorRulePath = () => {
+  return `/etc/deepdefense/falco_rules.yaml`
+}
+
 module.exports = {
   connectToMongodb,
+  connectToPgsql,
   resSuc,
   resErr,
   get,
   getMongoDBUrl,
-  getScannerUrl
+  getScannerUrl,
+  getPgsqlUrl,
+  getPgsqlPort,
+  getMonitorConfPath,
+  getMonitorRulePath
 }

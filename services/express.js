@@ -52,9 +52,9 @@ function startApp () {
   databaseInit()
   initApp(app)
   /**refresh all repositories image list */
-  setInterval(dockerRepository.freshRepository(), 1000 * 10)
+  // setInterval(dockerRepository.freshRepository, 1000 * 30)
   /**analyze image which cannot analyze first again */
-  setInterval(dockerRepository.freshImage(), 1000 * 60 * 60)
+  // setInterval(dockerRepository.freshImage, 1000 * 60 * 60)
   var server = http.Server(app)
   server.listen(app.get('port'), function () {
     info('listen at port:' + app.get('port'))
@@ -65,7 +65,7 @@ function initApp (app) {
   app.set('port', config.port.http)
   // load body parse middleware
   app.use(bodyParser.json())
-  app.use(bodyParser.urlencoded({ extended: false }))
+  // app.use(bodyParser.urlencoded({ extended: false }))
   app.use(cookieParser())
 
   // load seesion middleware
@@ -92,6 +92,7 @@ function initApp (app) {
   app.use('/api/repository', auth, require('../routers/repositoryRouter'))
   app.use('/api/scanner', auth, require('../routers/scannerRouter'))
   app.use('/api/score', auth, require('../routers/scoreRouter'))
+  app.use('/api/monitor', auth, require('../routers/monitorRouter'))
 }
 
 

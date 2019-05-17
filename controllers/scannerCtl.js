@@ -89,23 +89,30 @@ function getImagePage (req, res) {
         return { cveId: { $regex: key } }
       })
       : null
+  const match = new RegExp()
   let sortOption = {}
   sortOption[field] = order
+  console.time('searchDB')
   dockerVulnerability
-    .find(
-      and
-        ? {
-          $and: and,
-          repository: req.body.repository,
-          image: req.body.image,
-          tag: req.body.tag
-        }
-        : {
-          repository: req.body.repository,
-          image: req.body.image,
-          tag: req.body.tag
-        }
-    )
+    // .find(
+    //   and
+    //     ? {
+    //       $and: and,
+    //       repository: req.body.repository,
+    //       image: req.body.image,
+    //       tag: req.body.tag
+    //     }
+    //     : {
+    //       repository: req.body.repository,
+    //       image: req.body.image,
+    //       tag: req.body.tag
+    //     }
+    // )
+    .find({
+      repository: req.body.repository,
+      image: req.body.image,
+      tag: req.body.tag
+    })
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -124,6 +131,7 @@ function getImagePage (req, res) {
       version: 1
     })
     .exec(async function (err, docs) {
+      console.timeEnd('searchDB')
       if (err) {
         warn(`getImagePage: fail`)
         resErr(res, new dbException(err))
@@ -132,12 +140,7 @@ function getImagePage (req, res) {
       resSuc(res, {
         docs,
         count: await dockerVulnerability
-          .find({
-            repository: req.body.repository,
-            image: req.body.image,
-            tag: req.body.tag
-          })
-          .find(
+          .countDocuments(
             and
               ? {
                 $and: and,
@@ -151,7 +154,21 @@ function getImagePage (req, res) {
                 tag: req.body.tag
               }
           )
-          .countDocuments()
+        // .find(
+        //   and
+        //     ? {
+        //       $and: and,
+        //       repository: req.body.repository,
+        //       image: req.body.image,
+        //       tag: req.body.tag
+        //     }
+        //     : {
+        //       repository: req.body.repository,
+        //       image: req.body.image,
+        //       tag: req.body.tag
+        //     }
+        // )
+        // .countDocuments()
       })
     })
 }

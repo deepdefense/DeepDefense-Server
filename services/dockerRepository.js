@@ -12,8 +12,16 @@ const { dbException, clairException, paramsException } = require('../class/excep
 
 /**
  * @param: data: {
- *   
+ *   name: '测试124'
+ *   repository: '192.168.3.124',
+ *   port: 5000,
+ *   username: 'abc',
+ *   passwd: 'abc123',
+ *   isAuth: false,
+ *   isHttps: false
  * }
+ * 
+ * @return: false|true
  */
 const testRepository = (data) => {
   return new Promise((resolve, reject) => {
@@ -23,11 +31,11 @@ const testRepository = (data) => {
       passwd: data.isAuth && data.passwd !== '' ? data.passwd : null
     }
     // debug(`request:${JSON.stringify(dcrApiCheck)}`)
-    common.get(dcrApiCheck).then(function (data) {
+    common.get(dcrApiCheck).then((data) => {
       info('testRepository: complete')
       resolve(true)
     }).catch(function (err) {
-      warn('testRepository: faild')
+      info('testRepository: complete')
       resolve(false)
     })
   })
@@ -97,27 +105,20 @@ const getImageByRepository = (data) => {
  * }
  * 
  * @return: {
- *   data: {
- *     name: '测试124',
- *     repository: '192.168.3.124',
- *     port: 5000,
- *     username: 'abc',
- *     passwd: 'abc123',
- *     isAuth: false,
- *     isHttps: false,
- *     images: [{
- *       image: 'ubuntu',
- *       tags: [ latest ]
- *     }]
- *   },
- *   errors: {
- *     image: 'deepdefense-scanner',
- *     err: 'null'
- *   }
+ *   name: '测试124',
+ *   repository: '192.168.3.124',
+ *    port: 5000,
+ *    username: 'abc',
+ *    passwd: 'abc123',
+ *    isAuth: false,
+ *    isHttps: false,
+ *    images: [{
+ *      image: 'ubuntu',
+ *      tags: [ latest ]
+ *    }]
  * }
  */
 const getTagByImage = (data) => {
-  let errors = []
   let results = []
   return new Promise(async (resolve, reject) => {
     if (data.images && data.images.length > 0) {
@@ -139,19 +140,15 @@ const getTagByImage = (data) => {
           }
         } catch (err) {
           warn(`tags of ${data.images[i]} err: ${err}`)
-          errors.push({
-            image: data.images[i],
-            err: err
-          })
         }
       }
       data.images = results
       info('getTagByImage: complete')
-      resolve({ data, errors })
+      resolve(data)
     } else {
       data.images = results
       info('getTagByImage: complete')
-      resolve({ data, errors })
+      resolve(data)
     }
   })
 }
@@ -234,6 +231,7 @@ const clairAnalyze = (data) => {
         }
         result = Object.assign(result, levels)
         result.score = await calScore(result)
+        debug(`clair analyze: complete`)
         // debug(`result: ${JSON.stringify(result)}`)
         // debug(`vulnerabilities: ${JSON.stringify(vulnerabilities)}`)
         resolve({ vulnerabilities, result })
@@ -246,97 +244,78 @@ const clairAnalyze = (data) => {
 
 /**
  * @params data: {
- *   data: {
- *     name: '测试124',
- *     repository: '192.168.3.124',
- *     port: 5000,
- *     username: 'abc',
- *     passwd: 'abc123',
- *     isAuth: false,
- *     isHttps: false,
- *     images: [{
- *       image: 'ubuntu',
- *       tags: [ latest ]
- *     }]
- *   },
- *   errors: {
- *     image: 'deepdefense-scanner',
- *     err: 'null'
- *   }
- * }
- * 
- * @return: {
- *   results: [{
- *     result: {
- *       repository: 
- *     },
- *     vulnerability: [{
- *       
- *     }, {...}, ...
- *     ]
- *   }, {...}, ...],
- *   errors: [{
- *     image: '192.168.3.124:5000/redis:latest',
- *     err: '...'
- *   }, {...}, ...]
- * }
+ *   name: '测试124',
+ *   repository: '192.168.3.124',
+ *   port: 5000,
+ *   username: 'abc',
+ *   passwd: 'abc123',
+ *   isAuth: false,
+ *   isHttps: false,
+ *   images: [{
+ *     image: 'ubuntu',
+ *     tags: [ latest ]
+ *   }]
+ *}
  */
 const analyzeImage = (data) => {
   return new Promise(async (resolve, reject) => {
-    data = data.data
-    let [results, errors] = [[], []]
     for (let image of data.images) {
       for (let tag of image.tags) {
-        try {
-          let result = await clairAnalyze({
-            repository: data.repository,
-            port: data.port,
-            username: data.username,
-            passwd: data.passwd,
-            isHttps: data.isHttps,
-            isAuth: data.isAuth,
-            image: image.image,
-            tag: tag
+        clairAnalyze({
+          repository: data.repository,
+          port: data.port,
+          username: data.username,
+          passwd: data.passwd,
+          isHttps: data.isHttps,
+          isAuth: data.isAuth,
+          image: image.image,
+          tag: tag
+        })
+          .then((data) => {
+            return new Promise((resolve, reject) => {
+              saveImage(data.result)
+              removeVulnerabilities({
+                repository: data.result.repository,
+                image: data.result.image,
+                tag: data.result.tag
+              })
+                .then(() => {
+                  saveVulnerabilities(data)
+                })
+                .catch(err => {
+                  warn(JSON.stringify(err.stack))
+                })
+            })
           })
-          results.push(result)
-        } catch (err) {
-          errors.push({
-            image: `${data.repository}${data.port ? `:${data.port}` : ``}/${image.image}:${tag}`,
-            err: err.stack
+          .catch(err => {
+            warn(`${data.repository}${data.port ? `:${data.port}` : ``}/${image.image}:${tag} save fail:　${err}`)
           })
-        }
       }
     }
     info(`reposiroty ${data.repository}: analyze complete`)
-    resolve({ results, errors })
+    resolve(data)
   })
 }
 
 /**
  * @param: data: {
- *   data: {
- *     repository: '192.168.3.124',
- *     port: 5000,
- *     isAuth: false,
- *     isHttps: false,
- *     username: 'abc',
- *     passwd: 'abc123',
- *     images: [{
- *       image: 'ubuntu',
- *       tags: ['16.04', ...]
- *     }, {...}, ...]
- *   }, errors: [{
- *     image: 'redis',
- *     err: 'null'
- *     }, {...}, ...]
- * }
+ *   repository: '192.168.3.124',
+ *   port: 5000,
+ *   isAuth: false,
+ *   isHttps: false,
+ *   username: 'abc',
+ *   passwd: 'abc123',
+ *   images: [{
+ *     image: 'ubuntu',
+ *     tags: ['16.04', ...]
+ *   }, {...}, ...]
+ *}
  * 
  * @return: [
  *   {}, {...}, ...
  * ]
  */
 const formatResponse = (data) => {
-  data = data.data
   let results = []
   data.images.forEach(image => {
     image.tags.forEach(tag => {
@@ -359,15 +338,19 @@ const formatResponse = (data) => {
 
 /**
  * @param: data: {
- *   data: {
- *     repository: '192.168.3.124',
- *     port: 5000,...
- *   }
- * }
+ *   repository: '192.168.3.124',
+ *   port: 5000,
+ *   isAuth: false,
+ *   isHttps: false,
+ *   username: 'abc',
+ *   passwd: 'abc123',
+ *   images: [{
+ *     image: 'ubuntu',
+ *     tags: ['16.04', ...]
+ *   }, {...}, ...]
+ *}
  */
 const removeImages = (data) => {
-  let errors = data.errors
-  data = data.data
   return new Promise((resolve, reject) => {
     Image
       .deleteMany({
@@ -376,7 +359,7 @@ const removeImages = (data) => {
       .then(res => {
         if (res.ok == 1) {
           info(`remove images of ${data.repository}${data.port ? `:${data.port}` : ''}: complete, count: ${res.deletedCount}`)
-          resolve({ data, errors })
+          resolve(data)
         } else {
           throw new dbException(`something wrong happend`)
         }
@@ -389,64 +372,6 @@ const removeImages = (data) => {
 
 /**
  * @param: data: {
- *   results: [{
- *     result: {
- *       repository: 
- *     },
- *     vulnerability: [{
- *       
- *     }, {...}, ...
- *     ]
- *   }, {...}, ...],
- *   errors: [{
- *     image: '192.168.3.124:5000/redis:latest',
- *     err: '...'
- *   }, {...}, ...]
- * }
- * 
- * @return: {
- *   results: [{
- *     result: {
- *       repository: 
- *     },
- *     vulnerability: [{
- *       
- *     }, {...}, ...
- *     ]
- *   }, {...}, ...],
- *   errors: [{
- *     image: '192.168.3.124:5000/redis:latest',
- *     err: '...'
- *   }, {...}, ...]
- * }
- */
-const removeVulnerabilities = (data) => {
-  return new Promise((resolve, reject) => {
-    data.results.forEach(item => {
-      let { result, vulnerabilities } = item
-      Vulnerability
-        .deleteMany({
-          repository: result.repository,
-          image: result.image,
-          tag: result.tag
-        })
-        .then(res => {
-          if (res.ok == 1) {
-            info(`remove vulnerabilities of ${result.repository}/${result.image}:${result.tag}: complete, count: ${res.deletedCount}`)
-            resolve(data)
-          } else {
-            throw new Error(`something wrong happen`)
-          }
-        })
-        .catch(err => {
-          reject(new dbException(err))
-        })
-    })
-  })
-}
-
-/**
- * @param: data: [{
  *   repository: '192.168.3.124:5000',
  *   image: 'ubuntu',
  *   tag: '16.04',
@@ -457,76 +382,119 @@ const removeVulnerabilities = (data) => {
  *   negligible: 0,
  *   unknown: 1,
  *   score: 24.001
- * }, {...}, ...]
+ * }
  */
-const saveImages = (data) => {
+const saveImage = (data) => {
   return new Promise((resolve, reject) => {
-    data.forEach(image => {
-      Image
-        .findOneAndUpdate(
-          {
-            repository: image.repository,
-            image: image.image,
-            tag: image.tag
-          }, {
-            $set: image
-          }, {
-            upsert: true,
-            new: true,
-            setDefaultsOnInsert: true
-          })
-        .then(doc => {
-          resolve(data)
+    Image
+      .findOneAndUpdate(
+        {
+          repository: data.repository,
+          image: data.image,
+          tag: data.tag
+        }, {
+          $set: data
+        }, {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true
         })
-        .catch(err => {
-          reject(err)
-        })
-    })
+      .then(doc => {
+        if (data.score !== -1) {
+          debug(`${data.repository}/${data.image}:${data.tag}: ioSocket`)
+          io.emit('news', `${data.repository}/${data.image}:${data.tag}`)
+        } else {
+          debug(`${data.repository}/${data.image}:${data.tag}: init save`)
+        }
+        resolve(data)
+      })
+      .catch(err => {
+        reject(new dbException(err))
+      })
   })
 }
 
 /**
  * @param: data: {
- *   results: [{
- *     result: {
- *       repository: 
- *     },
- *     vulnerability: [{
- *       
- *     }, {...}, ...
- *     ]
- *   }, {...}, ...],
- *   errors: [{
- *     image: '192.168.3.124:5000/redis:latest',
- *     err: '...'
- *   }, {...}, ...]
+ *   repository: '192.168.3.124:5000',
+ *   image: 'ubuntu',
+ *   tag: '1604',
+ *   namespace: 'ubuntu:16.04',
+ *   high: 10,
+ *   medium: 24,
+ *   low: 100,
+ *   negligible: 0,
+ *   unknown: 1,
+ *   score: 24.001
+ * }
+ */
+const removeVulnerabilities = (data) => {
+  return new Promise((resolve, reject) => {
+    Vulnerability
+      .deleteMany({
+        repository: data.repository,
+        image: data.image,
+        tag: data.tag
+      }, err => { new dbException(err) })
+      .then(res => {
+        if (res.ok == 1) {
+          info(`remove vulnerabilities of ${data.repository}/${data.image}:${data.tag}: complete, count: ${res.deletedCount}`)
+          resolve(data)
+        } else {
+          throw new Error(`something wrong happen`)
+        }
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
+
+
+/**
+ * @param: data: {
+ *   result: {
+ *     repository: '192.168.3.124:5000',
+ *     image: 'ubuntu',
+ *     tag: '1604',
+ *     namespace: 'ubuntu:16.04',
+ *     high: 10,
+ *     medium: 24,
+ *     low: 100,
+ *     negligible: 0,
+ *     unknown: 1,
+ *     score: 24.001
+ *   },
+ *   vulnerabilities: [{
+ *       ...
+ *     }, {...}
+ *   ]
  * }
  */
 const saveVulnerabilities = (data) => {
+  let { result, vulnerabilities } = data
   return new Promise((resolve, reject) => {
-    data.results.forEach(item => {
-      let { result, vulnerabilities } = item
-      vulnerabilities.forEach(vul => {
-        Vulnerability
-          .create({
-            repository: result.repository,
-            image: result.image,
-            tag: result.tag,
-            cveId: vul.Name,
-            description: vul.Description,
-            link: vul.Link,
-            level: vul.Severity,
-            type: vul.VulName,
-            versionFormat: vul.VersionFormat,
-            version: vul.Version
-          })
-          .then(doc => {
-            debug(`${result.repository}/${result.image}:${result.tag}: ${vul.Name} save complete`)
-          })
-          .catch(err => {
-            warn(`${result.repositories}/${result.image}:${result.tag}: ${vul.Name} save fail`)
-          })
-      })
+    vulnerabilities.forEach(vul => {
+      Vulnerability
+        .create({
+          repository: result.repository,
+          image: result.image,
+          tag: result.tag,
+          cveId: vul.Name,
+          description: vul.Description,
+          link: vul.Link,
+          level: vul.Severity,
+          type: vul.VulName,
+          versionFormat: vul.VersionFormat,
+          version: vul.Version
+        })
+        .then(doc => {
+          debug(`${result.repository}/${result.image}:${result.tag}: ${vul.Name} save complete`)
+        })
+        .catch(err => {
+          warn(`${result.repositories}/${result.image}:${result.tag}: ${vul.Name} save fail`)
+        })
     })
   })
 }
@@ -577,7 +545,7 @@ const freshRepository = () => {
           .then(removeImages)
           .then(data => {
             return new Promise((resolve, reject) => {
-              saveImages(formatResponse(data))
+              saveImage(formatResponse(data))
                 .then(() => {
                   resolve(data)
                 })
@@ -587,6 +555,14 @@ const freshRepository = () => {
             })
           })
           .then(analyzeImage)
+          .then(data => {
+            return new Promise((resolve, reject) => {
+              saveImage(data.results.map(result => {
+                return result.result
+              }))
+              resolve(data)
+            })
+          })
           .then(removeVulnerabilities)
           .then(saveVulnerabilities)
       })
@@ -623,7 +599,7 @@ const freshImage = () => {
           })
           .then(clairAnalyze)
           .then(analyzeResult => {
-            saveImages([analyzeResult.result])
+            saveImage([analyzeResult.result])
               .catch(err => { warn(err.stack) })
             removeVulnerabilities({ data: analyzeResult })
               .then(saveVulnerabilities)
@@ -669,7 +645,7 @@ module.exports = {
   formatResponse,
   removeImages,
   removeVulnerabilities,
-  saveImages,
+  saveImage,
   saveVulnerabilities,
   freshRepository,
   freshImage
