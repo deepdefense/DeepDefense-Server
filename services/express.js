@@ -43,7 +43,7 @@ var sessionOption = {
 }
 
 // main logical
-function startApp() {
+function startApp () {
   console.log('welcome to use, server is going to start')
   var app = express()
   connectToMongodb()
@@ -185,7 +185,7 @@ function startApp() {
                 tag: analyzeResult.result.getTagByImage
               })
               .then(data => {
-                analyzeResult.vulnerabilities.forEach(function(vul) {
+                analyzeResult.vulnerabilities.forEach(function (vul) {
                   vulnerability
                     .create({
                       repository: analyzeResult.result.repository,
@@ -199,10 +199,10 @@ function startApp() {
                       versionFormat: vul.VersionFormat,
                       version: vul.Version
                     })
-                    .then(function(doc) {
+                    .then(function (doc) {
                       //   debug('vulnerability save')
                     })
-                    .catch(function(err) {
+                    .catch(function (err) {
                       //   warn('vulnerability save fail')
                     })
                 })
@@ -258,7 +258,7 @@ function startApp() {
                   image: image.image,
                   tag: image.tag
                 })
-                .then(function(analyzeResult) {
+                .then(function (analyzeResult) {
                   dockerImage
                     .findOneAndUpdate(
                       {
@@ -280,10 +280,10 @@ function startApp() {
                       },
                       { upsert: true, setDefaultsOnInsert: true, new: true }
                     )
-                    .then(function(doc) {
+                    .then(function (doc) {
                       if (doc) {
                         info('io: send a fresh')
-                        io.on('connection', function(client) {
+                        io.on('connection', function (client) {
                           client.emit('news', 'one image analyze complete')
                         })
                         //   io.on('news', `one image analyze complete`)
@@ -291,7 +291,7 @@ function startApp() {
                         throw new dbException('No such data')
                       }
                     })
-                    .catch(function(err) {
+                    .catch(function (err) {
                       warn(`${data.repository}:${data.port}/${image.image}:${tag} save fail: ${err}`)
                     })
 
@@ -301,8 +301,8 @@ function startApp() {
                       image: analyzeResult.result.image,
                       tag: analyzeResult.result.tag
                     })
-                    .then(function() {
-                      analyzeResult.vulnerabilities.forEach(function(vul) {
+                    .then(function () {
+                      analyzeResult.vulnerabilities.forEach(function (vul) {
                         dockerVulnerability
                           .create({
                             repository: analyzeResult.result.repository,
@@ -316,19 +316,19 @@ function startApp() {
                             versionFormat: vul.VersionFormat,
                             version: vul.Version
                           })
-                          .then(function(doc) {
+                          .then(function (doc) {
                             debug('vulnerability save')
                           })
-                          .catch(function(err) {
+                          .catch(function (err) {
                             warn('vulnerability save fail')
                           })
                       })
                     })
-                    .catch(function(err) {
+                    .catch(function (err) {
                       warn('vulnerability remove fail')
                     })
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                   warn(`${data.repository}:${data.port}/${image.image}:${tag} analyze fail: ${err}`)
                 })
             })
@@ -340,12 +340,12 @@ function startApp() {
       })
   }, 1000 * 60 * 60 * 24)
   var server = http.Server(app)
-  server.listen(app.get('port'), function() {
+  server.listen(app.get('port'), function () {
     info('listen at port:' + app.get('port'))
   })
 }
 
-function initApp(app) {
+function initApp (app) {
   app.set('port', config.port.http)
   // load body parse middleware
   app.use(bodyParser.json())
@@ -381,12 +381,13 @@ function initApp(app) {
 /**
  * connecte to the mongodb
  */
-function connectToMongodb() {
-  function connect() {
+function connectToMongodb () {
+  function connect () {
     var options = {
       // server: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
       // replset: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } },
-      useNewUrlParser: true
+      useNewUrlParser: true,
+      useFindAndModify: false
     }
     debug(config.database)
     var connct = mongoose.connect(config.database.toString(), options)
