@@ -7,13 +7,25 @@ const path = require('path')
 const { debug, info, warn, error } = require('./logger')
 const config = require('./config')
 
-var pool = new Pool({
-  user: 'postgres',
-  host: getPgsqlUrl(),
-  database: 'postgres',
-  password: '',
-  port: getPgsqlPort(),
-})
+const getMongoDBUrl = () => {
+  return `mongodb://${config.database.ip}:${config.database.port}/deepdefense`
+}
+
+const getPgsqlUrl = () => {
+  return `postgresql://postgres@${config.cve.ip}:${config.cve.port}/postgres`
+}
+
+const getScannerUrl = () => {
+  return `http://${config.scanner.ip}:${config.scanner.port}`
+}
+
+const getMonitorConfPath = () => {
+  return path.join(__dirname, '../config/falco.yaml')
+}
+
+const getMonitorRulePath = () => {
+  return `/etc/deepdefense/falco_rules.yaml`
+}
 
 /**
  * connecte to the mongodb
@@ -26,7 +38,7 @@ const connectToMongodb = () => {
       useNewUrlParser: true,
       useFindAndModify: false // enable use findOneAndUpdate or findOneAndRemove
     }
-    return connct = mongoose.connect(getMongoDBUrl(), options)
+    return (connct = mongoose.connect(getMongoDBUrl(), options))
   }
 
   mongoose.connection
@@ -42,20 +54,23 @@ const connectToMongodb = () => {
   return connect() // connect to the mongodb
 }
 
-const connectToPgsql = () => {
-  pool.connection
+/**
+ * postgresql connect
+ */
+const cvePool = new Pool({ connectionString: `${getPgsqlUrl()}` })
 
-  pool.on()
-  return pool
-}
+cvePool.on('connect', client => {
+  info(`get a new connect`)
+})
 
 /**data: { url, username, passwd, isAuth } */
-const get = (data) => {
-  return new Promise(function (resolve, reject) {
+const get = data => {
+  return new Promise(function(resolve, reject) {
     let headers = {
       Accept: 'text/html, application/xhtml+xml, */*',
       'Accept-Language': 'zh-CN',
-      'User-Agent': 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
+      'User-Agent':
+        'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
       Connection: 'Keep-Alive',
       'Accept-Encoding': 'gzip,deflate'
     }
@@ -72,13 +87,13 @@ const get = (data) => {
       }
     }
 
-    request.get(option, function (err, response, data) {
+    request.get(option, function(err, response, data) {
       // debug(`statusCode: ${response !== null ? response.statusCode : null }`);
       if (!err && response.statusCode === 200) {
         let buffer = new Buffer(data)
         let encoding = response.headers['content-encoding']
         if (encoding == 'gzip') {
-          zlib.gunzip(buffer, function (err, decoded) {
+          zlib.gunzip(buffer, function(err, decoded) {
             if (err) {
               reject(`unzip error ${err}`)
             }
@@ -88,7 +103,7 @@ const get = (data) => {
             }
           })
         } else if (encoding == 'deflate') {
-          zlib.inflate(buffer, function (err, decoded) {
+          zlib.inflate(buffer, function(err, decoded) {
             if (err) {
               reject(`deflate error ${err}`)
             }
@@ -128,40 +143,15 @@ const resErr = (res, error) => {
   })
 }
 
-const getMongoDBUrl = () => {
-  return `mongodb://${config.database.ip}:${config.database.port}/deepdefense`
-}
-
-const getPgsqlUrl = () => {
-  return config.cve.ip
-}
-
-const getPgsqlPort = () => {
-  return config.cve.port
-}
-
-const getScannerUrl = () => {
-  return `http://${config.scanner.ip}:${config.scanner.port}`
-}
-
-const getMonitorConfPath = () => {
-  return path.join(__dirname, '../config/falco.yaml')
-}
-
-const getMonitorRulePath = () => {
-  return `/etc/deepdefense/falco_rules.yaml`
-}
-
 module.exports = {
   connectToMongodb,
-  connectToPgsql,
+  cvePool,
   resSuc,
   resErr,
   get,
   getMongoDBUrl,
   getScannerUrl,
   getPgsqlUrl,
-  getPgsqlPort,
   getMonitorConfPath,
   getMonitorRulePath
 }

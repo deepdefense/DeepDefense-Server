@@ -9,14 +9,14 @@ const { dbException, paramsException } = require('../class/exceptions')
  * pagination: { from, size }
  * sort: { field, order }
  */
-function getPage (req, res) {
+function getPage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
   let and =
     req.body.search && req.body.search.length !== 0
-      ? req.body.search.map(function (key) {
-        return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
-      })
+      ? req.body.search.map(function(key) {
+          return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
+        })
       : null
   let sortOption = {}
   sortOption[field] = order
@@ -39,7 +39,7 @@ function getPage (req, res) {
       tag: 1,
       score: 1
     })
-    .exec(async function (err, docs) {
+    .exec(async function(err, docs) {
       if (err) {
         warn(`getPage: fail`)
         resErr(res, new dbException(err))
@@ -55,21 +55,21 @@ function getPage (req, res) {
 /**
  * req.body: { repository, image, tag }
  */
-function getImage (req, res) {
+function getImage(req, res) {
   dockerImage
     .findOne({
       repository: req.body.repository,
       image: req.body.image,
       tag: req.body.tag
     })
-    .then(function (doc) {
+    .then(function(doc) {
       if (doc) {
         resSuc(res, doc)
       } else {
         throw new dbException(`No such image`)
       }
     })
-    .catch(function (err) {
+    .catch(function(err) {
       warn(`getImage: faild`)
       resErr(res, doc)
     })
@@ -80,39 +80,34 @@ function getImage (req, res) {
  * pagination: { from, size }
  * sort: { field, order }
  */
-function getImagePage (req, res) {
+function getImagePage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
   let and =
     req.body.search && req.body.search.length !== 0
-      ? req.body.search.map(function (key) {
-        return { cveId: { $regex: key } }
-      })
+      ? req.body.search.map(function(key) {
+          return { cveId: { $regex: key } }
+        })
       : null
   const match = new RegExp()
   let sortOption = {}
   sortOption[field] = order
   console.time('searchDB')
   dockerVulnerability
-    // .find(
-    //   and
-    //     ? {
-    //       $and: and,
-    //       repository: req.body.repository,
-    //       image: req.body.image,
-    //       tag: req.body.tag
-    //     }
-    //     : {
-    //       repository: req.body.repository,
-    //       image: req.body.image,
-    //       tag: req.body.tag
-    //     }
-    // )
-    .find({
-      repository: req.body.repository,
-      image: req.body.image,
-      tag: req.body.tag
-    })
+    .find(
+      and
+        ? {
+            $and: and,
+            repository: req.body.repository,
+            image: req.body.image,
+            tag: req.body.tag
+          }
+        : {
+            repository: req.body.repository,
+            image: req.body.image,
+            tag: req.body.tag
+          }
+    )
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -130,7 +125,7 @@ function getImagePage (req, res) {
       versionFormat: 1,
       version: 1
     })
-    .exec(async function (err, docs) {
+    .exec(async function(err, docs) {
       console.timeEnd('searchDB')
       if (err) {
         warn(`getImagePage: fail`)
@@ -143,32 +138,32 @@ function getImagePage (req, res) {
           .countDocuments(
             and
               ? {
-                $and: and,
-                repository: req.body.repository,
-                image: req.body.image,
-                tag: req.body.tag
-              }
+                  $and: and,
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
               : {
-                repository: req.body.repository,
-                image: req.body.image,
-                tag: req.body.tag
-              }
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
           )
-        // .find(
-        //   and
-        //     ? {
-        //       $and: and,
-        //       repository: req.body.repository,
-        //       image: req.body.image,
-        //       tag: req.body.tag
-        //     }
-        //     : {
-        //       repository: req.body.repository,
-        //       image: req.body.image,
-        //       tag: req.body.tag
-        //     }
-        // )
-        // .countDocuments()
+          .find(
+            and
+              ? {
+                  $and: and,
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
+              : {
+                  repository: req.body.repository,
+                  image: req.body.image,
+                  tag: req.body.tag
+                }
+          )
+          .countDocuments()
       })
     })
 }

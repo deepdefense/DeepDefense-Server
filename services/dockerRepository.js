@@ -1,9 +1,9 @@
 'use strict'
-const Clair = require('clair-client')
+const clairClient = require('clair-client')
 const Repository = require('../collections/repository')
 const Image = require('../collections/image')
 const Vulnerability = require('../collections/vulnerability')
-const conf = require('../collections/config')
+const Conf = require('../collections/config')
 const io = require('./socketService')
 const common = require('./common')
 const { debug, info, warn, error } = require('./logger')
@@ -20,10 +20,10 @@ const { dbException, clairException, paramsException } = require('../class/excep
  *   isAuth: false,
  *   isHttps: false
  * }
- * 
+ *
  * @return: false|true
  */
-const testRepository = (data) => {
+const testRepository = data => {
   return new Promise((resolve, reject) => {
     const dcrApiCheck = {
       url: `${data.isHttps ? 'https' : 'http'}://${data.repository}${data.port ? `:${data.port}` : ''}/v2`,
@@ -31,13 +31,16 @@ const testRepository = (data) => {
       passwd: data.isAuth && data.passwd !== '' ? data.passwd : null
     }
     // debug(`request:${JSON.stringify(dcrApiCheck)}`)
-    common.get(dcrApiCheck).then((data) => {
-      info('testRepository: complete')
-      resolve(true)
-    }).catch(function (err) {
-      info('testRepository: complete')
-      resolve(false)
-    })
+    common
+      .get(dcrApiCheck)
+      .then(data => {
+        info('testRepository: complete')
+        resolve(true)
+      })
+      .catch(function(err) {
+        info('testRepository: complete')
+        resolve(false)
+      })
   })
 }
 
@@ -51,7 +54,7 @@ const testRepository = (data) => {
  *   isAuth: false,
  *   isHttps: false
  * }
- * 
+ *
  * @return: {
  *   name: '测试124',
  *   repository: '192.168.3.124',
@@ -66,7 +69,7 @@ const testRepository = (data) => {
  *   ]
  * }
  */
-const getImageByRepository = (data) => {
+const getImageByRepository = data => {
   return new Promise((resolve, reject) => {
     const dcrApi_catalog = {
       url: `${data.isHttps ? 'https' : 'http'}://${data.repository}${data.port ? `:${data.port}` : ''}/v2/_catalog`,
@@ -82,7 +85,7 @@ const getImageByRepository = (data) => {
         data.images = res.repositories
         resolve(data)
       })
-      .catch(function (err) {
+      .catch(function(err) {
         warn('getImageByRepository: faild')
         reject(err)
       })
@@ -103,7 +106,7 @@ const getImageByRepository = (data) => {
  *     'redis'
  *   ]
  * }
- * 
+ *
  * @return: {
  *   name: '测试124',
  *   repository: '192.168.3.124',
@@ -118,7 +121,7 @@ const getImageByRepository = (data) => {
  *    }]
  * }
  */
-const getTagByImage = (data) => {
+const getTagByImage = data => {
   let results = []
   return new Promise(async (resolve, reject) => {
     if (data.images && data.images.length > 0) {
@@ -165,7 +168,7 @@ const getTagByImage = (data) => {
  *   image: 'ubuntu',
  *   tags: 'latest'
  * }
- * 
+ *
  * @return: {
  *   result: {
  *     repository: '192.168.3.124:5000',
@@ -185,7 +188,7 @@ const getTagByImage = (data) => {
  *   ]
  * }
  */
-const clairAnalyze = (data) => {
+const clairAnalyze = data => {
   let vulnerabilities = new Array()
   let result = new Object()
   return new Promise((resolve, reject) => {
@@ -197,12 +200,13 @@ const clairAnalyze = (data) => {
       clairOption.dockerUsername = data.username
       clairOption.dockerPassword = data.passwd
     }
-    const clair = new Clair(clairOption)
+    // debug(JSON.stringify(clairOption))
+    const clair = new clairClient(clairOption)
     const image = `${data.isHttps ? 'https' : 'http'}://${data.repository}${data.port ? `:${data.port}` : ''}/${data.image}:${data.tag}`
     // debug(JSON.stringify(image))
     clair
       .analyze({ image })
-      .then(async (analyzeResult) => {
+      .then(async analyzeResult => {
         result = {
           repository: `${data.repository}${data.port ? `:${data.port}` : ''}`,
           image: data.image,
@@ -257,7 +261,7 @@ const clairAnalyze = (data) => {
  *   }]
  *}
  */
-const analyzeImage = (data) => {
+const analyzeImage = data => {
   return new Promise(async (resolve, reject) => {
     for (let image of data.images) {
       for (let tag of image.tags) {
@@ -271,8 +275,9 @@ const analyzeImage = (data) => {
           image: image.image,
           tag: tag
         })
-          .then((data) => {
+          .then(data => {
             return new Promise((resolve, reject) => {
+              /**remove old image docs of this repository */
               saveImage(data.result)
               removeVulnerabilities({
                 repository: data.result.repository,
@@ -310,12 +315,12 @@ const analyzeImage = (data) => {
  *     tags: ['16.04', ...]
  *   }, {...}, ...]
  *}
- * 
+ *
  * @return: [
  *   {}, {...}, ...
  * ]
  */
-const formatResponse = (data) => {
+const formatResponse = data => {
   let results = []
   data.images.forEach(image => {
     image.tags.forEach(tag => {
@@ -350,12 +355,11 @@ const formatResponse = (data) => {
  *   }, {...}, ...]
  *}
  */
-const removeImages = (data) => {
+const removeImages = data => {
   return new Promise((resolve, reject) => {
-    Image
-      .deleteMany({
-        repository: `${data.repository}${data.port ? `:${data.port}` : ''}`,
-      })
+    Image.deleteMany({
+      repository: `${data.repository}${data.port ? `:${data.port}` : ''}`
+    })
       .then(res => {
         if (res.ok == 1) {
           info(`remove images of ${data.repository}${data.port ? `:${data.port}` : ''}: complete, count: ${res.deletedCount}`)
@@ -371,7 +375,7 @@ const removeImages = (data) => {
 }
 
 /**
- * @param: data: {
+ * @param: {
  *   repository: '192.168.3.124:5000',
  *   image: 'ubuntu',
  *   tag: '16.04',
@@ -382,24 +386,27 @@ const removeImages = (data) => {
  *   negligible: 0,
  *   unknown: 1,
  *   score: 24.001
- * }
+ * } data
  */
-const saveImage = (data) => {
+const saveImage = data => {
   return new Promise((resolve, reject) => {
-    Image
-      .findOneAndUpdate(
-        {
-          repository: data.repository,
-          image: data.image,
-          tag: data.tag
-        }, {
-          $set: data
-        }, {
-          upsert: true,
-          new: true,
-          setDefaultsOnInsert: true
-        })
+    Image.findOneAndUpdate(
+      {
+        repository: data.repository,
+        image: data.image,
+        tag: data.tag
+      },
+      {
+        $set: data
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    )
       .then(doc => {
+        // debug(JSON.stringify(doc))
         if (data.score !== -1) {
           debug(`${data.repository}/${data.image}:${data.tag}: ioSocket`)
           io.emit('news', `${data.repository}/${data.image}:${data.tag}`)
@@ -428,14 +435,18 @@ const saveImage = (data) => {
  *   score: 24.001
  * }
  */
-const removeVulnerabilities = (data) => {
+const removeVulnerabilities = data => {
   return new Promise((resolve, reject) => {
-    Vulnerability
-      .deleteMany({
+    Vulnerability.deleteMany(
+      {
         repository: data.repository,
         image: data.image,
         tag: data.tag
-      }, err => { new dbException(err) })
+      },
+      err => {
+        new dbException(err)
+      }
+    )
       .then(res => {
         if (res.ok == 1) {
           info(`remove vulnerabilities of ${data.repository}/${data.image}:${data.tag}: complete, count: ${res.deletedCount}`)
@@ -449,8 +460,6 @@ const removeVulnerabilities = (data) => {
       })
   })
 }
-
-
 
 /**
  * @param: data: {
@@ -472,25 +481,24 @@ const removeVulnerabilities = (data) => {
  *   ]
  * }
  */
-const saveVulnerabilities = (data) => {
+const saveVulnerabilities = data => {
   let { result, vulnerabilities } = data
   return new Promise((resolve, reject) => {
     vulnerabilities.forEach(vul => {
-      Vulnerability
-        .create({
-          repository: result.repository,
-          image: result.image,
-          tag: result.tag,
-          cveId: vul.Name,
-          description: vul.Description,
-          link: vul.Link,
-          level: vul.Severity,
-          type: vul.VulName,
-          versionFormat: vul.VersionFormat,
-          version: vul.Version
-        })
+      Vulnerability.create({
+        repository: result.repository,
+        image: result.image,
+        tag: result.tag,
+        cveId: vul.Name,
+        description: vul.Description,
+        link: vul.Link,
+        level: vul.Severity,
+        type: vul.VulName,
+        versionFormat: vul.VersionFormat,
+        version: vul.Version
+      })
         .then(doc => {
-          debug(`${result.repository}/${result.image}:${result.tag}: ${vul.Name} save complete`)
+          // debug(`${result.repository}/${result.image}:${result.tag}: ${vul.Name} save complete`)
         })
         .catch(err => {
           warn(`${result.repositories}/${result.image}:${result.tag}: ${vul.Name} save fail`)
@@ -507,14 +515,14 @@ const saveVulnerabilities = (data) => {
  *   neriable: 0,
  *   unknow: 3
  * }
- * 
+ *
  * @return: 24.001<number>
  */
-const calScore = (data) => {
+const calScore = data => {
   let [sum, score] = [0, 0]
-  return new Promise(function (resolve, reject) {
-    conf.findOne({ key: 'SCORE' })
-      .then((doc) => {
+  return new Promise(function(resolve, reject) {
+    Conf.findOne({ key: 'SCORE' })
+      .then(doc => {
         if (doc) {
           const levels = Object.keys(doc.config)
           for (const level of levels) {
@@ -527,112 +535,108 @@ const calScore = (data) => {
           throw new dbException('No such config info')
         }
       })
-      .catch((err) => {
+      .catch(err => {
         warn('calScore: fail')
         reject(err)
       })
   })
 }
 
-
 const freshRepository = () => {
-  Repository
-    .find({})
-    .then(docs => {
-      docs.forEach(doc => {
-        getImageByRepository(doc)
-          .then(getTagByImage)
-          .then(removeImages)
-          .then(data => {
-            return new Promise((resolve, reject) => {
-              saveImage(formatResponse(data))
-                .then(() => {
-                  resolve(data)
-                })
-                .catch(err => {
-                  reject(err)
-                })
+  Repository.find({})
+    .then(
+      docs => {
+        docs.forEach(doc => {
+          getImageByRepository(doc)
+            .then(getTagByImage)
+            .then(removeImages)
+            .then(data => {
+              return new Promise(async (resolve, reject) => {
+                for (let image of formatResponse(data)) {
+                  try {
+                    await saveImage(image)
+                  } catch (err) {
+                    warn(err)
+                  }
+                }
+                resolve(data)
+              })
             })
-          })
-          .then(analyzeImage)
-          .then(data => {
-            return new Promise((resolve, reject) => {
-              saveImage(data.results.map(result => {
-                return result.result
-              }))
-              resolve(data)
+            .then(analyzeImage)
+            .catch(err => {
+              warn(err)
             })
-          })
-          .then(removeVulnerabilities)
-          .then(saveVulnerabilities)
-      })
-    }, (err) => {
-      throw new dbException(err)
-    })
+        })
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
     .catch(err => {
       warn(err)
     })
 }
 
 const freshImage = () => {
-  Image
-    .find({ score: -1, isEnable: true })
-    .then(docs => {
-      docs.forEach(doc => {
-        Repository
-          .findOne({
-            repository: doc.repository.split(':')[0]
-          })
-          .then(repoDoc => {
-            return new Promise((resolve, reject) => {
-              resolve({
-                repository: repoDoc.repository,
-                port: repoDoc.port,
-                username: repoDoc.username,
-                passwd: repoDoc.passwd,
-                isHttps: repoDoc.isHttps,
-                isAuth: repoDoc.isAuth,
-                image: doc.image,
-                tag: doc.tag
-              })
+  Image.find({ score: -1, isEnable: true }).then(docs => {
+    docs.forEach(doc => {
+      Repository.findOne({
+        repository: doc.repository.split(':')[0]
+      })
+        .then(repoDoc => {
+          return new Promise((resolve, reject) => {
+            resolve({
+              repository: repoDoc.repository,
+              port: repoDoc.port,
+              username: repoDoc.username,
+              passwd: repoDoc.passwd,
+              isHttps: repoDoc.isHttps,
+              isAuth: repoDoc.isAuth,
+              image: doc.image,
+              tag: doc.tag
             })
           })
-          .then(clairAnalyze)
-          .then(analyzeResult => {
-            saveImage([analyzeResult.result])
-              .catch(err => { warn(err.stack) })
-            removeVulnerabilities({ data: analyzeResult })
-              .then(saveVulnerabilities)
+        })
+        .then(clairAnalyze)
+        .then(analyzeResult => {
+          saveImage([analyzeResult.result]).catch(err => {
+            warn(err.stack)
+          })
+          removeVulnerabilities({ data: analyzeResult })
+            .then(saveVulnerabilities)
+            .catch(err => {
+              warn(err.stack)
+            })
+        })
+        .catch(err => {
+          if (err.code == 5001) {
+            doc.isEnable = false
+            Image.findOneAndUpdate(
+              {
+                repository: doc.repository,
+                image: doc.image,
+                tag: doc.tag
+              },
+              {
+                $set: doc
+              },
+              {
+                upsert: true,
+                new: true
+              }
+            )
+              .then(res => {
+                warn(`cannot analyze now`)
+              })
               .catch(err => {
                 warn(err.stack)
               })
-
-          })
-          .catch(err => {
-            if (err.code == 5001) {
-              doc.isEnable = false
-              Image
-                .findOneAndUpdate({
-                  repository: doc.repository,
-                  image: doc.image,
-                  tag: doc.tag
-                }, {
-                    $set: doc
-                  }, {
-                    upsert: true, new: true
-                  })
-                .then(res => {
-                  warn(`cannot analyze now`)
-                })
-                .catch(err => {
-                  warn(err.stack)
-                })
-            } else {
-              warn(err)
-            }
-          })
-      })
+          } else {
+            warn(err)
+          }
+        })
     })
+  })
 }
 
 module.exports = {

@@ -21,6 +21,7 @@ function remove () {
   echo $RESULT
 }
 
+#./removeImage.sh 192.168.3.124:5000 ubuntu 16.04
 remove $REPOSITORY $IMAGE $TAG
 
 #remove image matedata from repository

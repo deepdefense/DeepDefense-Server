@@ -11,5 +11,6 @@
   //使用带引号替代双引号
   "prettier.singleQuote": true,
   //让函数(名)和后面的括号之间加个空格
-  "javascript.format.insertSpaceBeforeFunctionParenthesis": true
+  "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
+  "prettier.printWidth": 200
 }

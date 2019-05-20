@@ -6,7 +6,7 @@
     },
     "database": {
       "ip": "192.168.3.124",
-      "port": 27018
+      "port": 27017
     },
     "front": {
       "socket": 4004
@@ -17,7 +17,7 @@
       "path": "scannerLog/scanner.log"
     },
     "scanner": {
-      "ip": "192.168.10.112",
+      "ip": "192.168.3.124",
       "port": 6060
     },
     "cve": {
@@ -43,7 +43,7 @@
       "path": "scannerLog/scanner.log"
     },
     "scanner": {
-      "ip": "192.168.10.112",
+      "ip": "192.168.3.124",
       "port": 6060
     },
     "cve": {
