@@ -1,4 +1,5 @@
 #instand of $SRC with absolute path
+<<<<<<< HEAD
 version: "2"
 services:
   deepdefense-db:
@@ -7,24 +8,46 @@ services:
     restart: always
     ports:
       - "27017:27017"
+=======
+version: '2'
+services:
+  deepdefense-db:
+    image: deepdefense-db:latest
+    container_name: deepdefense-db
+    restart: always
+    ports:
+      - '27017:27017'
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
 
   deepdefense-cve:
     image: deepdefense-cve:9.6
     container_name: deepdefense-cve
     restart: always
     ports:
+<<<<<<< HEAD
       - "5432:5432"
+=======
+      - '5432:5432'
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
     environment:
       - POSTRES_PASSWD=""
 
   deepdefense-scanner:
+<<<<<<< HEAD
     image: deepdefense-scanner:2.0
+=======
+    image: deepdefense-scanner:v2.0.8
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
     container_name: deepdefense-scanner
     restart: always
     depends_on:
       - deepdefense-cve
     volumes:
+<<<<<<< HEAD
       - "/home/guyi/deepdefense-scanner/config:/config"
+=======
+      - '/home/guyi/clair/clair_config:/config'
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
     ports:
       - "6060-6061:6060-6061"
     command: -config=/config/config.yaml
@@ -37,9 +60,15 @@ services:
       - deepdefense-db
       - deepdefense-scanner
     volumes:
+<<<<<<< HEAD
       - "/etc/deepdefense:/etc/deepdefense"
     ports:
       - "4000-4001:4000-4001"
+=======
+      - '/etc/deepdefense:/etc/deepdefense'
+    ports:
+      - '4000-4001:4000-4001'
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
 
   deepdefense-portal:
     image: deepdefense-portal:v2.1
@@ -48,4 +77,8 @@ services:
     depends_on:
       - scanner-api-server
     ports:
+<<<<<<< HEAD
       - "4002:5001"
+=======
+      - '4002:5001'
+>>>>>>> 57a5632fd8b9385099f4eca8b92ddf5659028dff
