@@ -52,9 +52,9 @@ function startApp() {
   databaseInit()
   initApp(app)
   /**refresh all repositories image list */
-  setInterval(dockerRepository.freshRepository, 1000 * 30)
+  // setInterval(dockerRepository.freshRepository, 1000 * 30)
   /**analyze image which cannot analyze first again */
-  setInterval(dockerRepository.freshImage, 1000 * 60 * 60)
+  // setInterval(dockerRepository.freshImage, 1000 * 60 * 60)
   var server = http.Server(app)
   server.listen(app.get('port'), function() {
     info('listen at port:' + app.get('port'))

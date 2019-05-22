@@ -9,8 +9,7 @@ const { dbException, paramsException } = require('../class/exceptions')
 
 const getRepositoryList = (req, res) => {
   try {
-    Repository
-      .find({})
+    Repository.find({})
       .select(`-_id, -created_at, -updated_at`)
       .exec((err, docs) => {
         info(`getRepositoryList: complete`)
@@ -25,12 +24,11 @@ const getRepositoryList = (req, res) => {
 /**
  * test and update isConnect
  */
-function testRepository (req, res) {
+function testRepository(req, res) {
   let tempDoc = new Object()
-  Repository
-    .findOne({ repository: req.query.repository })
-    .then(function (doc) {
-      return new Promise(function (resolve, reject) {
+  Repository.findOne({ repository: req.query.repository })
+    .then(function(doc) {
+      return new Promise(function(resolve, reject) {
         info(`DB: complete`)
         if (doc) {
           tempDoc = doc
@@ -41,24 +39,23 @@ function testRepository (req, res) {
       })
     })
     .then(dockerRepository.testRepository)
-    .then(function (data) {
-      return new Promise(function (resolve, reject) {
-        Repository
-          .update({ repository: req.query.repository }, { $set: { isConnect: data } })
-          .then(function (doc) {
+    .then(function(data) {
+      return new Promise(function(resolve, reject) {
+        Repository.update({ repository: req.query.repository }, { $set: { isConnect: data } })
+          .then(function(doc) {
             tempDoc.isConnect = data
             resolve(tempDoc)
           })
-          .catch(function (err) {
+          .catch(function(err) {
             reject(new dbException(err))
           })
       })
     })
-    .then(function (data) {
+    .then(function(data) {
       info(`testRepository: complete`)
       resSuc(res, data)
     })
-    .catch(function (err) {
+    .catch(function(err) {
       warn(`testRepository: fail`)
       resErr(res, err)
     })
@@ -95,21 +92,25 @@ const addRepository = (req, res) => {
     return
   }
   /**have existed? */
-  Repository
-    .findOne({ repository: req.body.repository })
-    .then(doc => {
-      return new Promise((resolve, reject) => {
-        if (doc) {
-          throw new dbException(`${req.body.repository} already existed, cannot add`)
-        } else {
-          resolve(req.body)
-        }
-      })
-    }, (err) => { throw new dbException(err) })
+  Repository.findOne({ repository: req.body.repository })
+    .then(
+      doc => {
+        return new Promise((resolve, reject) => {
+          if (doc) {
+            throw new dbException(`${req.body.repository} already existed, cannot add`)
+          } else {
+            resolve(req.body)
+          }
+        })
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
     /**test repository connection */
     .then(dockerRepository.testRepository)
     .then(isConnect => {
-      return new Promise(function (resolve, reject) {
+      return new Promise(function(resolve, reject) {
         req.body.isConnect = isConnect
         repositoryClone = req.body
         resolve(req.body)
@@ -118,16 +119,20 @@ const addRepository = (req, res) => {
     /**add the repository to the DB */
     .then(data => {
       return new Promise((resolve, reject) => {
-        Repository
-          .create(data)
-          .then(data => {
-            info(`addRepository: complete`)
-            if (data.isConnect) {
-              resolve(data)
-            } else {
-              reject(new Error(`cannot connect`))
+        Repository.create(data)
+          .then(
+            data => {
+              info(`addRepository: complete`)
+              if (data.isConnect) {
+                resolve(data)
+              } else {
+                reject(new Error(`cannot connect`))
+              }
+            },
+            err => {
+              throw new dbException(err)
             }
-          }, err => { throw new dbException(err) })
+          )
           .catch(err => {
             reject(new dbException(err))
           })
@@ -146,10 +151,9 @@ const addRepository = (req, res) => {
         }
       }
       resSuc(res, data)
-      dockerRepository.analyzeImage(data)
-        .catch(err => {
-          warn(err.stack)
-        })
+      dockerRepository.analyzeImage(data).catch(err => {
+        warn(err.stack)
+      })
     })
     .catch(err => {
       if (err.message == `cannot connect`) {
@@ -173,11 +177,10 @@ const addRepository = (req, res) => {
  * req.query: { registry }
  */
 const removeRepository = (req, res) => {
-  Repository
-    .findOneAndRemove({ repository: req.query.repository })
+  Repository.findOneAndRemove({ repository: req.query.repository })
     .then(
-      function (doc) {
-        return new Promise(function (resolve, reject) {
+      function(doc) {
+        return new Promise(function(resolve, reject) {
           info(`DB: complete`)
           if (doc) {
             resolve(doc)
@@ -186,7 +189,7 @@ const removeRepository = (req, res) => {
           }
         })
       },
-      function (error) {
+      function(error) {
         throw new dbException(error)
       }
     )
@@ -202,11 +205,11 @@ const removeRepository = (req, res) => {
           warn(`remove ${doc.repository}:${doc.port} images: faile`)
         })
     })
-    .then(function (data) {
+    .then(function(data) {
       info(`removeRepository: complete`)
       resSuc(res, data)
     })
-    .catch(function (error) {
+    .catch(function(error) {
       warn(`removeRepository: fail`)
       resErr(res, error)
     })
@@ -222,13 +225,12 @@ const setRepository = (req, res) => {
     .then(data => {
       return new Promise((resolve, reject) => {
         req.body.isConnect = data
-        ressudoolve(req.body)
+        resolve(req.body)
       })
     })
     .then(data => {
       return new Promise((resolve, reject) => {
-        Repository
-          .findOneAndUpdate({ repository: req.body.repository }, { $set: data }, { upsert: true, new: true })
+        Repository.findOneAndUpdate({ repository: req.body.repository }, { $set: data }, { upsert: true, new: true })
           .then(doc => {
             info(`DB: complete`)
             if (doc && doc.isConnect) {
@@ -303,19 +305,19 @@ const setRepository = (req, res) => {
 }
 
 /** LOCAL FUNCTION */
-const isRepositoryLegal = (ip) => {
+const isRepositoryLegal = ip => {
   return /(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})(\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})){3}/.test(ip)
 }
 
-const isPortLegal = (port) => {
+const isPortLegal = port => {
   return port > 0
 }
 
-const isPasswdLegal = (passwd) => {
+const isPasswdLegal = passwd => {
   return true
 }
 
-const isUsernameLegal = (username) => {
+const isUsernameLegal = username => {
   return true
 }
 
