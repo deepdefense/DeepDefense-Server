@@ -42,7 +42,7 @@ sudo docker image pull mongo:4.0.9
 sudo docker image pull postgres:9.6
 sudo docker tag mongo:4.0.9 deepdefense-db:4.0.9 && sudo docker image rm mongo:4.0.9
 sudo docker tag postgres:9.6 deepdefense-cve:9.6 && sudo docker image rm postgres:9.6
-##build clair image(deepdefense-scanner)
+##get clair source code(deepdefense-scanner)
 git clone -b release-2.0 https://github.com/coreos/clair.git
 ##get clair config file
 curl -L https://raw.githubusercontent.com/coreos/clair/master/config.yaml.sample -o /etc/deepdefense/deepdefense-scanner-config.yaml
