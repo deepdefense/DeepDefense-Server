@@ -8,25 +8,25 @@ const dockerImage = require('../collections/image')
 
 connectToMongodb()
 
-dockerRepository
-  .getImageByRepository({
-    name: '测试124',
-    repository: '192.168.3.124',
-    port: 5000,
-    username: 'abc',
-    passwd: 'abc123',
-    isAuth: false,
-    isHttps: false
-  })
-  .then(dockerRepository.getTagByImage)
-  // .then(dockerRepository.removeImages)
-  .then(dockerRepository.analyzeImage)
-  .then(function(data) {
-    info(JSON.stringify(data))
-  })
-  .catch(function(err) {
-    error(JSON.stringify(err.stack))
-  })
+// dockerRepository
+//   .getImageByRepository({
+//     name: '测试124',
+//     repository: '192.168.3.124',
+//     port: 5000,
+//     username: 'abc',
+//     passwd: 'abc123',
+//     isAuth: false,
+//     isHttps: false
+//   })
+//   .then(dockerRepository.getTagByImage)
+//   // .then(dockerRepository.removeImages)
+//   .then(dockerRepository.analyzeImage)
+//   .then(function(data) {
+//     info(JSON.stringify(data))
+//   })
+//   .catch(function(err) {
+//     error(JSON.stringify(err.stack))
+//   })
 
 // dockerRepository
 //   .clairAnalyze({
@@ -47,3 +47,20 @@ dockerRepository
 //   })
 
 // dockerRepository.freshRepository()
+
+dockerRepository
+  .analyzeImage({
+    repository: '192.168.10.108',
+    port: 5000,
+    username: 'abc',
+    passwd: 'abc123',
+    isAuth: false,
+    isHttps: false,
+    images: [{ image: 'addon-resizer', tags: ['1.8.4'] }]
+  })
+  .then(data => {
+    info(JSON.stringify(data))
+  })
+  .catch(err => {
+    error(JSON.stringify(err.stack))
+  })

@@ -1,12 +1,15 @@
 'use strict'
+/**export modules */
 const clairClient = require('clair-client')
+/**collections */
 const Repository = require('../collections/repository')
 const Image = require('../collections/image')
 const Vulnerability = require('../collections/vulnerability')
 const Conf = require('../collections/config')
+/**local modules */
+const { debug, info, warn, error } = require('./logger')
 const io = require('./socketService')
 const common = require('./common')
-const { debug, info, warn, error } = require('./logger')
 const config = require('./config')
 const { dbException, clairException, paramsException } = require('../class/exceptions')
 
@@ -174,6 +177,7 @@ const getTagByImage = data => {
  *     repository: '192.168.3.124:5000',
  *     image: 'ubuntu',
  *     tag: '1604',
+ *     isEnable: true
  *     namespace: 'ubuntu:16.04',
  *     high: 10,
  *     medium: 24,
@@ -190,7 +194,11 @@ const getTagByImage = data => {
  */
 const clairAnalyze = data => {
   let vulnerabilities = new Array()
-  let result = new Object()
+  let result = {
+    repository: `${data.repository}${data.port ? `:${data.port}` : ''}`,
+    image: data.image,
+    tag: data.tag
+  }
   return new Promise((resolve, reject) => {
     let clairOption = {
       clairAddress: common.getScannerUrl(),
@@ -207,41 +215,51 @@ const clairAnalyze = data => {
     clair
       .analyze({ image })
       .then(async analyzeResult => {
-        result = {
-          repository: `${data.repository}${data.port ? `:${data.port}` : ''}`,
-          image: data.image,
-          tag: data.tag,
-          namespace: analyzeResult.vulnerabilities[0].NamespaceName ? analyzeResult.vulnerabilities[0].NamespaceName : null
-        }
-        let [high, medium, low, negligible, unknown] = [0, 0, 0, 0, 0]
-        let levels = {
-          high,
-          medium,
-          low,
-          negligible,
-          unknown
-        }
-        for (const vul1 of analyzeResult.vulnerabilities) {
-          for (const vul2 of vul1.Vulnerabilities) {
-            levels[vul2.Severity.toLowerCase()]++
-            vulnerabilities.push(
-              Object.assign(vul2, {
-                VulName: vul1.Name,
-                VersionFormat: vul1.VersionFormat,
-                Version: vul1.Version
-              })
-            )
+        if (!analyzeResult.isVulnerable) {
+          warn(`${image}: can't analyze,you may check the status of deepdefense-scanner`)
+          result.isEnable = false
+          resolve({
+            result,
+            vulnerabilities: []
+          })
+        } else {
+          result.namespace = analyzeResult.vulnerabilities[0] && analyzeResult.vulnerabilities[0].NamespaceName ? analyzeResult.vulnerabilities[0].NamespaceName : null
+          result.isEnable = true
+          let [high, medium, low, negligible, unknown] = [0, 0, 0, 0, 0]
+          let levels = {
+            high,
+            medium,
+            low,
+            negligible,
+            unknown
           }
+          for (const vul1 of analyzeResult.vulnerabilities) {
+            for (const vul2 of vul1.Vulnerabilities) {
+              levels[vul2.Severity.toLowerCase()]++
+              vulnerabilities.push(
+                Object.assign(vul2, {
+                  VulName: vul1.Name,
+                  VersionFormat: vul1.VersionFormat,
+                  Version: vul1.Version
+                })
+              )
+            }
+          }
+          result = Object.assign(result, levels)
+          result.score = await calScore(result)
+          debug(`${image} analyze: complete`)
+          // debug(`result: ${JSON.stringify(result)}`)
+          // debug(`vulnerabilities: ${JSON.stringify(vulnerabilities)}`)
+          resolve({ vulnerabilities, result })
         }
-        result = Object.assign(result, levels)
-        result.score = await calScore(result)
-        debug(`clair analyze: complete`)
-        // debug(`result: ${JSON.stringify(result)}`)
-        // debug(`vulnerabilities: ${JSON.stringify(vulnerabilities)}`)
-        resolve({ vulnerabilities, result })
       })
       .catch(err => {
-        reject(new clairException(err))
+        warn(`clair error: ${err}`)
+        result.isEnable = false
+        resolve({
+          result: result,
+          vulnerabilities: []
+        })
       })
   })
 }
@@ -379,6 +397,7 @@ const removeImages = data => {
  *   repository: '192.168.3.124:5000',
  *   image: 'ubuntu',
  *   tag: '16.04',
+ *   isEnable: tru,
  *   namespace: 'ubuntu:16.04',
  *   high: 12,
  *   medium: 24,
@@ -405,18 +424,23 @@ const saveImage = data => {
         setDefaultsOnInsert: true
       }
     )
-      .then(doc => {
-        // debug(JSON.stringify(doc))
-        if (data.score !== -1) {
-          debug(`${data.repository}/${data.image}:${data.tag}: ioSocket`)
-          io.emit('news', `${data.repository}/${data.image}:${data.tag}`)
-        } else {
-          debug(`${data.repository}/${data.image}:${data.tag}: init save`)
+      .then(
+        doc => {
+          debug(doc.isEnable)
+          if (doc.score !== -1) {
+            debug(`${doc.repository}/${doc.image}:${doc.tag}: ioSocket`)
+            io.emit('news', `${doc.repository}/${doc.image}:${doc.tag}`)
+          } else {
+            debug(`${doc.repository}/${doc.image}:${doc.tag}: init save`)
+          }
+          resolve(doc)
+        },
+        err => {
+          throw new dbException(err)
         }
-        resolve(data)
-      })
+      )
       .catch(err => {
-        reject(new dbException(err))
+        reject(err)
       })
   })
 }
@@ -609,31 +633,7 @@ const freshImage = () => {
             })
         })
         .catch(err => {
-          if (err.code == 5001) {
-            doc.isEnable = false
-            Image.findOneAndUpdate(
-              {
-                repository: doc.repository,
-                image: doc.image,
-                tag: doc.tag
-              },
-              {
-                $set: doc
-              },
-              {
-                upsert: true,
-                new: true
-              }
-            )
-              .then(res => {
-                warn(`cannot analyze now`)
-              })
-              .catch(err => {
-                warn(err.stack)
-              })
-          } else {
-            warn(err)
-          }
+          warn(err)
         })
     })
   })

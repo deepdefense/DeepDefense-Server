@@ -1,68 +1,81 @@
+'use strict'
+/**collections */
 const Repository = require('../collections/repository')
 const dockerImage = require('../collections/image')
+/**local modules */
 const dockerRepository = require('../services/dockerRepository')
 const { debug, info, warn, error } = require('../services/logger')
 const { resSuc, resErr } = require('../services/common')
-const { dbException, paramsException } = require('../class/exceptions')
+const { dbException, paramsException, unconnectException } = require('../class/exceptions')
 
 /** COMMON FUNCTION */
 
+/**
+ * @function: get repository list
+ */
 const getRepositoryList = (req, res) => {
-  try {
-    Repository.find({})
-      .select(`-_id, -created_at, -updated_at`)
-      .exec((err, docs) => {
-        info(`getRepositoryList: complete`)
-        resSuc(res, docs)
-      })
-  } catch (err) {
-    warn(`getRepositoryList: fail`)
-    resErr(res, err)
-  }
+  Repository.find({})
+    .select(`-_id, -created_at, -updated_at`)
+    .then(docs => {
+      info(`getRepositoryList: complete`)
+      resSuc(res, docs)
+    })
+    .catch(err => {
+      warn(`getRepositoryList: fail`)
+      resErr(res, err)
+    })
 }
 
 /**
- * test and update isConnect
+ * @function: test and update isConnect
  */
-function testRepository(req, res) {
-  let tempDoc = new Object()
+const testRepository = (req, res) => {
   Repository.findOne({ repository: req.query.repository })
-    .then(function(doc) {
-      return new Promise(function(resolve, reject) {
-        info(`DB: complete`)
-        if (doc) {
-          tempDoc = doc
-          resolve(doc)
-        } else {
-          throw new dbException(`${req.query.repository}: No such repository`)
-        }
-      })
-    })
+    .then(
+      doc => {
+        return new Promise((resolve, reject) => {
+          info(`Repository: find`)
+          if (doc) {
+            tempDoc = doc
+            resolve(doc)
+          } else {
+            throw new dbException(`${req.query.repository}: No such repository`)
+          }
+        })
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
     .then(dockerRepository.testRepository)
-    .then(function(data) {
-      return new Promise(function(resolve, reject) {
-        Repository.update({ repository: req.query.repository }, { $set: { isConnect: data } })
-          .then(function(doc) {
-            tempDoc.isConnect = data
-            resolve(tempDoc)
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        Repository.findOneAndUpdate({ repository: req.query.repository }, { $set: { isConnect: data } }, { new: true })
+          .select({
+            _id: 0,
+            updated_at: 0,
+            created_at: 0
           })
-          .catch(function(err) {
+          .then(doc => {
+            resolve(doc)
+          })
+          .catch(err => {
             reject(new dbException(err))
           })
       })
     })
-    .then(function(data) {
+    .then(data => {
       info(`testRepository: complete`)
       resSuc(res, data)
     })
-    .catch(function(err) {
+    .catch(err => {
       warn(`testRepository: fail`)
       resErr(res, err)
     })
 }
 
 /**
- * req.body: {
+ * @param: {
  *  "repository": "192.168.3.124",
  *  "port": 5000,
  *  "username": null,
@@ -70,7 +83,7 @@ function testRepository(req, res) {
  *  "isAuth": true,
  *  "isHttps": false,
  *  "name": "测试124"
- * }
+ * } req.body
  */
 const addRepository = (req, res) => {
   let repositoryClone = {}
@@ -110,7 +123,7 @@ const addRepository = (req, res) => {
     /**test repository connection */
     .then(dockerRepository.testRepository)
     .then(isConnect => {
-      return new Promise(function(resolve, reject) {
+      return new Promise((resolve, reject) => {
         req.body.isConnect = isConnect
         repositoryClone = req.body
         resolve(req.body)
@@ -126,7 +139,7 @@ const addRepository = (req, res) => {
               if (data.isConnect) {
                 resolve(data)
               } else {
-                reject(new Error(`cannot connect`))
+                throw new unconnectException(`can't connect to ${data.repository}`)
               }
             },
             err => {
@@ -134,7 +147,7 @@ const addRepository = (req, res) => {
             }
           )
           .catch(err => {
-            reject(new dbException(err))
+            reject(err)
           })
       })
     })
@@ -147,25 +160,18 @@ const addRepository = (req, res) => {
         try {
           await dockerRepository.saveImage(image)
         } catch (err) {
-          warn(err.stack)
+          warn(err)
         }
       }
       resSuc(res, data)
       dockerRepository.analyzeImage(data).catch(err => {
-        warn(err.stack)
+        warn(err)
       })
     })
     .catch(err => {
-      if (err.message == `cannot connect`) {
+      if (err.code == 5002) {
         info(`addRepository: complete`)
         resSuc(res, repositoryClone)
-      } else if (err.message.indexOf('already existed') > -1) {
-        warn(err)
-        res.json({
-          code: 1,
-          data: null,
-          message: `${err}`
-        })
       } else {
         warn(err)
         resErr(res, err)

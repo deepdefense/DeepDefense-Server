@@ -2,14 +2,14 @@
   "dev": {
     "auth": false,
     "port": {
-      "http": 4003
+      "http": 4000
     },
     "database": {
       "ip": "192.168.3.124",
       "port": 27017
     },
     "front": {
-      "socket": 4004
+      "socket": 4001
     },
     "log": {
       "consoleLevel": "debug",
@@ -21,7 +21,7 @@
       "port": 6060
     },
     "cve": {
-      "ip": "192.168.3.124",
+      "ip": "192.168.10.104",
       "port": "5432"
     }
   },

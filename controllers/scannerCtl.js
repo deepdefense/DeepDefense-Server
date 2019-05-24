@@ -21,13 +21,13 @@ function getPage(req, res) {
   let sortOption = {}
   sortOption[field] = order
   dockerImage
-    .find(and ? { $and: and, repository: req.body.repository, isEnable: true } : { repository: req.body.repository, isEnable: true })
+    .find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository })
     .sort(sortOption)
     .skip(from)
     .limit(size)
     .select({
       _id: 0,
-      // name: 1,
+      isEnable: 1,
       high: 1,
       low: 1,
       negligible: 1,
@@ -47,7 +47,7 @@ function getPage(req, res) {
       }
       resSuc(res, {
         docs,
-        count: await dockerImage.find(and ? { $and: and, repository: req.body.repository, isEnable: true } : { repository: req.body.repository, isEnable: true }).countDocuments()
+        count: await dockerImage.find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository }).countDocuments()
       })
     })
 }

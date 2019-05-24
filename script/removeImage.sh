@@ -17,7 +17,8 @@ function remove () {
     exit 2
   fi
   echo "digest: $DIGEST"
-  RESULT=$(curl -v -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -X DELETE http://$REPOSITORY_LOCAL/v2/$IMAGE_LOCAL/manifests/$DIGEST)
+  # RESULT=$(curl -v -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -X DELETE http://$REPOSITORY_LOCAL/v2/$IMAGE_LOCAL/manifests/$DIGEST)
+  RESULT=$(curl -I -X DELETE http://$REPOSITORY_LOCAL/v2/$IMAGE_LOCAL/manifests/$DIGEST)
   echo $RESULT
 }
 
