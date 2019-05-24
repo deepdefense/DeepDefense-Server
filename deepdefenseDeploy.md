@@ -132,7 +132,7 @@ sudo docker run --restart=always --name deepdefense-cve -d -e POSTRES_PASSWD="" 
 sudo docker run --restart=always --name deepdefense-scanner -d -p 6060-6061:6060-6061 -v /etc/deepdefense:/config deepdefense-scanner:2.0 -config=/config/deepdefense-scanner-config.yaml
 
 #scanner-api-server
-sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-4001 --mount type=bind,source=/etc/deepdefense,target=/etc/deepdefense scanner-api-server:2.0.3
+sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-4001 -v /etc/deepdefense:/etc/deepdefense scanner-api-server:2.1.X
 
 #portal
 sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1 
