@@ -1,5 +1,5 @@
 const { dbException } = require('../class/exceptions')
-const { get } = require('../services/common')
+const { get } = require('../services/util')
 const { debug } = require('../services/logger')
 
 function fun() {

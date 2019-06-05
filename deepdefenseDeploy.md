@@ -114,6 +114,11 @@ threshold: 3
 ```
 ###  start container
 ```shell
+#set network
+sudo docker network create deepdefense
+#add such params running container, allow config file use hostname instand ip 
+--net deepdefense --hostname XXX
+
 #registry with auth
 # sudo docker run -d -p 5000:5000 --restart=always -v $SRC/registry/config/:/etc/docker/registry/ -v $SRC/registry/auth/:/auth/ -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry  Realm" -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v $SRC/registry/:/var/lib/registry/ registry
 #registry
@@ -136,4 +141,7 @@ sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-
 
 #portal
 sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1 
-```
+
+#falco
+sudo docker run  --privileged --restart=always --name deepdefense-monitor -d -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /etc/deepdefense/deepdefense-monitor-config.yaml:/etc/falco/falco.yaml -v /etc/deepdefense-monitor-rules.yaml:/etc/falco/falco_rules.local.yaml deepdefense-monitor:0.15.0
+```ls

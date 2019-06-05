@@ -2,9 +2,9 @@ const router = require('express').Router()
 const passport = require('passport')
 // collections
 const User = require('../collections/user')
-// common services
+// util services
 const logger = require('../services/logger')
-const { resSuc, resErr } = require('../services/common')
+const { resSuc, resErr } = require('../services/util')
 // exceptions
 const { dbException, paramsException } = require('../class/exceptions')
 

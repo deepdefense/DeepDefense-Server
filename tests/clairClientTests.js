@@ -23,6 +23,6 @@ async function fun(clairOption) {
 
 fun(clairOption)
 
-// const common = require(`../node_modules/docker-registry-client/lib/common`);
+// const util = require(`../node_modules/docker-registry-client/lib/util`);
 
-// debug(JSON.stringify(common.parseRepo(`jack777/defense-scanner`)));
+// debug(JSON.stringify(util.parseRepo(`jack777/defense-scanner`)));

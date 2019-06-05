@@ -35,7 +35,7 @@ rules_file:
   - /etc/falco/rules.d
 
 # Whether to output events in json or text
-json_output: false
+json_output: true
 
 # When using json output, whether or not to include the "output" property
 # itself (e.g. "File below a known binary directory opened for writing
@@ -137,9 +137,13 @@ webserver:
 program_output:
   enabled: false
   keep_alive: false
-  program: mail -s "Falco Notification" someone@example.com
+  program: "jq '{text: .output}' | curl -d @- -X POST http://192.168.3.124:4003/api/monitor/getEvent"
 
 http_output:
   enabled: true
-  url: http://192.168.3.124:4003/api/monitor
-#sudo docker run -i -t --name deepfense-monitor --privileged -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /home/mohan/src/scanner/falco.yaml:/etc/falco/falco.yaml deepdefense-monitor:0.14.0
+  url: http://192.168.3.124:4003/api/monitor/getEvent
+#start falco
+#sudo docker run -i -t --name deepdefense-monitor --privileged -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /home/mohan/src/scanner/config/falco.yaml:/etc/falco/falco.yaml deepdefense-monitor:0.14.0
+
+#start falco_event_generator
+#sudo docker run -it --name falco-event-generator sysdig/falco-event-generator

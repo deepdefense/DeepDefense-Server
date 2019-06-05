@@ -23,7 +23,7 @@ const vulnerability = require('../collections/vulnerability')
 const dockerRepository = require('./dockerRepository')
 const timedScan = require('./timedScan')
 const { dbException } = require('../class/exceptions')
-const common = require('./common')
+const util = require('./util')
 const { databaseInit } = require('./databaseInit')
 
 var sessionOption = {
@@ -48,7 +48,7 @@ var sessionOption = {
 function startApp() {
   console.log('welcome to use, server is going to start')
   var app = express()
-  common.connectToMongodb()
+  util.connectToMongodb()
   databaseInit()
   initApp(app)
   /**refresh all repositories image list */

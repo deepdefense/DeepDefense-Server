@@ -9,7 +9,7 @@ const Conf = require('../collections/config')
 /**local modules */
 const { debug, info, warn, error } = require('./logger')
 const io = require('./socketService')
-const common = require('./common')
+const util = require('./util')
 const config = require('./config')
 const { dbException, clairException, paramsException } = require('../class/exceptions')
 
@@ -34,7 +34,7 @@ const testRepository = data => {
       passwd: data.isAuth && data.passwd !== '' ? data.passwd : null
     }
     // debug(`request:${JSON.stringify(dcrApiCheck)}`)
-    common
+    util
       .get(dcrApiCheck)
       .then(data => {
         info('testRepository: complete')
@@ -80,7 +80,7 @@ const getImageByRepository = data => {
       passwd: data.isAuth && data.passwd !== '' ? data.passwd : null
     }
     // debug(`request: ${JSON.stringify(dcrApi_catalog)}`)
-    common
+    util
       .get(dcrApi_catalog)
       .then(res => {
         info(`getImageByRepository: complete`)
@@ -136,7 +136,7 @@ const getTagByImage = data => {
         }
         debug(`request: ${JSON.stringify(dcrApiTagList)}`)
         try {
-          let tags = (await common.get(dcrApiTagList)).tags
+          let tags = (await util.get(dcrApiTagList)).tags
           // debug(`tags of ${data.images[i]}: ${JSON.stringify(tags)}`)
           if (tags !== null) {
             results.push({
@@ -201,7 +201,7 @@ const clairAnalyze = data => {
   }
   return new Promise((resolve, reject) => {
     let clairOption = {
-      clairAddress: common.getScannerUrl(),
+      clairAddress: util.getScannerUrl(),
       dockerInsecure: !data.isHttps
     }
     if (data.isAuth && data.username !== '' && data.passwd !== '') {

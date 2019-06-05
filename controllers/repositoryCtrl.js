@@ -5,10 +5,9 @@ const dockerImage = require('../collections/image')
 /**local modules */
 const dockerRepository = require('../services/dockerRepository')
 const { debug, info, warn, error } = require('../services/logger')
-const { resSuc, resErr } = require('../services/common')
+const { resSuc, resErr } = require('../services/util')
 const { dbException, paramsException, unconnectException } = require('../class/exceptions')
 
-/** COMMON FUNCTION */
 
 /**
  * @function: get repository list
@@ -105,7 +104,7 @@ const addRepository = (req, res) => {
     return
   }
   /**have existed? */
-  Repository.findOne({ repository: req.body.repository })
+  Repository.findOne({ repository: req.body.repository, port: req.body.port })
     .then(
       doc => {
         return new Promise((resolve, reject) => {
@@ -183,7 +182,8 @@ const addRepository = (req, res) => {
  * req.query: { registry }
  */
 const removeRepository = (req, res) => {
-  Repository.findOneAndRemove({ repository: req.query.repository })
+  // Repository.findOneAndRemove({ repository: req.query.repository })
+  Repository.findOneAndRemove({ repository: req.query.repository, port: req.query.port })
     .then(
       function(doc) {
         return new Promise(function(resolve, reject) {
@@ -236,7 +236,7 @@ const setRepository = (req, res) => {
     })
     .then(data => {
       return new Promise((resolve, reject) => {
-        Repository.findOneAndUpdate({ repository: req.body.repository }, { $set: data }, { upsert: true, new: true })
+        Repository.findOneAndUpdate({ repository: req.body.repository, port: req.body.port }, { $set: data }, { upsert: true, new: true })
           .then(doc => {
             info(`DB: complete`)
             if (doc && doc.isConnect) {

@@ -1,7 +1,7 @@
 const dockerImage = require('../collections/image')
 const dockerVulnerability = require('../collections/vulnerability')
 const { debug, info, warn, error } = require('../services/logger')
-const { resSuc, resErr } = require('../services/common')
+const { resSuc, resErr } = require('../services/util')
 const { dbException, paramsException } = require('../class/exceptions')
 
 /**

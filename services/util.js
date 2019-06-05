@@ -20,11 +20,12 @@ const getScannerUrl = () => {
 }
 
 const getMonitorConfPath = () => {
-  return path.join(__dirname, '../config/falco.yaml')
+  // return path.join(__dirname, '../config/falco.yaml')
+  return `/etc/deepdefense/deepdefense-monitor-config.yaml`
 }
 
 const getMonitorRulePath = () => {
-  return `/etc/deepdefense/falco_rules.yaml`
+  return `/etc/deepdefense/deepdefense-monitor-rules.yaml`
 }
 
 /**
@@ -69,8 +70,7 @@ const get = data => {
     let headers = {
       Accept: 'text/html, application/xhtml+xml, */*',
       'Accept-Language': 'zh-CN',
-      'User-Agent':
-        'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
+      'User-Agent': 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)',
       Connection: 'Keep-Alive',
       'Accept-Encoding': 'gzip,deflate'
     }

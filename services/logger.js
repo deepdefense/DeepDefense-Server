@@ -1,7 +1,7 @@
 const { createLogger, format, transports } = require('winston')
 const { combine, timestamp, printf } = format
 const path = require('path')
-// common services
+// util services
 const config = require('./config')
 
 var tiemFormat = config.log.timeFormat

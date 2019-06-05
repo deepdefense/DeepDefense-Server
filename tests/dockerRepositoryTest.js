@@ -3,7 +3,7 @@ const conf = require('../collections/config')
 const user = require('../collections/user')
 const repository = require('../collections/repository')
 const { debug, info, warn, error } = require('../services/logger')
-const { connectToMongodb } = require('../services/common')
+const { connectToMongodb } = require('../services/util')
 const dockerImage = require('../collections/image')
 
 connectToMongodb()

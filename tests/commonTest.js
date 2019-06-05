@@ -1,7 +1,7 @@
-const common = require('../services/common');
+const util = require('../services/util');
 const { info, error } = require('../services/logger');
 
-common.get({
+util.get({
     url: 'http://192.168.10.118:5000/v2/_catalog',
     username: 'abc',
     passwd: 'abc123'

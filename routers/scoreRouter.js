@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const scoreCtl = require('../controllers/scoreCtl')
+const scoreCtl = require('../controllers/scoreCtrl')
 
 router.get('/', scoreCtl.getScore)
 router.put('/', scoreCtl.setScore)

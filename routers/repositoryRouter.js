@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const repository = require('../controllers/repositoryCtl')
+const repository = require('../controllers/repositoryCtrl')
 
 router.get('/', repository.getRepositoryList)
 router.post('/', repository.addRepository)
