@@ -1,6 +1,5 @@
 const conf = require('../collections/config')
-const dockerRepository = require('../services/dockerRepository')
-const dockerImage = require('../collections/image')
+const image = require('../collections/image')
 const { resSuc, resErr } = require('../services/util')
 const { debug, info, warn, error } = require('../services/logger')
 const { dbException } = require('../class/exceptions')
@@ -45,7 +44,7 @@ function setScore(req, res) {
     /**fresh score */
     .then(function(data) {
       let levels = Object.keys(req.body)
-      dockerImage
+      image
         .find({})
         .then(function(docs) {
           if (docs.length > 0) {
@@ -56,7 +55,7 @@ function setScore(req, res) {
                   score += doc[level] * (data[level] / data['low'])
                   sum += doc[level]
                 }
-                dockerImage
+                image
                   .findOneAndUpdate(
                     {
                       repository: doc.repository,

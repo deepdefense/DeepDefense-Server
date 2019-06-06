@@ -1,13 +1,14 @@
 'use strict'
-/**collections */
+/**COLLECTIONS */
 const Repository = require('../collections/repository')
-const dockerImage = require('../collections/image')
-/**local modules */
-const dockerRepository = require('../services/dockerRepository')
-const { debug, info, warn, error } = require('../services/logger')
+const Image = require('../collections/image')
+/**LOCAL MODULES */
+const repositoryServices = require('../services/repositoryServices')
+const scannerApi = require('../services/scannerApi')
+const dcrRepositoryApi = require('../services/dcrRepositoryApi')
 const { resSuc, resErr } = require('../services/util')
+const { debug, info, warn, error } = require('../services/logger')
 const { dbException, paramsException, unconnectException } = require('../class/exceptions')
-
 
 /**
  * @function: get repository list
@@ -21,54 +22,6 @@ const getRepositoryList = (req, res) => {
     })
     .catch(err => {
       warn(`getRepositoryList: fail`)
-      resErr(res, err)
-    })
-}
-
-/**
- * @function: test and update isConnect
- */
-const testRepository = (req, res) => {
-  Repository.findOne({ repository: req.query.repository })
-    .then(
-      doc => {
-        return new Promise((resolve, reject) => {
-          info(`Repository: find`)
-          if (doc) {
-            tempDoc = doc
-            resolve(doc)
-          } else {
-            throw new dbException(`${req.query.repository}: No such repository`)
-          }
-        })
-      },
-      err => {
-        throw new dbException(err)
-      }
-    )
-    .then(dockerRepository.testRepository)
-    .then(data => {
-      return new Promise((resolve, reject) => {
-        Repository.findOneAndUpdate({ repository: req.query.repository }, { $set: { isConnect: data } }, { new: true })
-          .select({
-            _id: 0,
-            updated_at: 0,
-            created_at: 0
-          })
-          .then(doc => {
-            resolve(doc)
-          })
-          .catch(err => {
-            reject(new dbException(err))
-          })
-      })
-    })
-    .then(data => {
-      info(`testRepository: complete`)
-      resSuc(res, data)
-    })
-    .catch(err => {
-      warn(`testRepository: fail`)
       resErr(res, err)
     })
 }
@@ -120,7 +73,7 @@ const addRepository = (req, res) => {
       }
     )
     /**test repository connection */
-    .then(dockerRepository.testRepository)
+    .then(scannerApi.testRepository)
     .then(isConnect => {
       return new Promise((resolve, reject) => {
         req.body.isConnect = isConnect
@@ -151,19 +104,19 @@ const addRepository = (req, res) => {
       })
     })
     /**get repository's image list if could connect */
-    .then(dockerRepository.getImageByRepository)
-    .then(dockerRepository.getTagByImage)
+    .then(dcrRepositoryApi.getImageByRepository)
+    .then(dcrRepositoryApi.getTagByImage)
     .then(async data => {
-      let images = dockerRepository.formatResponse(data)
+      let images = repositoryServices.formatResponse(data)
       for (let image of images) {
         try {
-          await dockerRepository.saveImage(image)
+          await repositoryServices.saveImage(image)
         } catch (err) {
           warn(err)
         }
       }
       resSuc(res, data)
-      dockerRepository.analyzeImage(data).catch(err => {
+      scannerApi.analyzeImage(data).catch(err => {
         warn(err)
       })
     })
@@ -200,10 +153,9 @@ const removeRepository = (req, res) => {
       }
     )
     .then(doc => {
-      dockerImage
-        .deleteMany({
-          repository: `${doc.repository}:${doc.port}`
-        })
+      Image.deleteMany({
+        repository: `${doc.repository}:${doc.port}`
+      })
         .then(data => {
           debug(`remove ${doc.repository}:${doc.port} images: complete`)
         })
@@ -226,7 +178,7 @@ const setRepository = (req, res) => {
     resErr(res, new paramsException(`port illegal`))
     return
   }
-  dockerRepository
+  scannerApi
     .testRepository(req.body)
     .then(data => {
       return new Promise((resolve, reject) => {
@@ -259,8 +211,8 @@ const setRepository = (req, res) => {
         resolve(data)
       })
     })
-    .then(dockerRepository.getImageByRepository)
-    .then(dockerRepository.getTagByImage)
+    .then(dcrRepositoryApi.getImageByRepository)
+    .then(dcrRepositoryApi.getTagByImage)
     .then(data => {
       debug(JSON.stringify(data))
       data = data.data
@@ -278,18 +230,17 @@ const setRepository = (req, res) => {
             unknown: -1,
             score: -1
           }
-          dockerImage
-            .findOneAndUpdate(
-              {
-                repository: `${data.repository}:${data.port}`,
-                image: image.image,
-                tag: tag
-              },
-              {
-                $setOnInsert: doc
-              },
-              { upsert: true, new: true }
-            )
+          Image.findOneAndUpdate(
+            {
+              repository: `${data.repository}:${data.port}`,
+              image: image.image,
+              tag: tag
+            },
+            {
+              $setOnInsert: doc
+            },
+            { upsert: true, new: true }
+          )
             .then(data => {
               info(`DB: complete`)
             })
@@ -307,6 +258,54 @@ const setRepository = (req, res) => {
         warn(`setRepository: fail`)
         resErr(res, err)
       }
+    })
+}
+
+/**
+ * @function: test and update isConnect
+ */
+const testRepository = (req, res) => {
+  Repository.findOne({ repository: req.query.repository })
+    .then(
+      doc => {
+        return new Promise((resolve, reject) => {
+          info(`Repository: find`)
+          if (doc) {
+            tempDoc = doc
+            resolve(doc)
+          } else {
+            throw new dbException(`${req.query.repository}: No such repository`)
+          }
+        })
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
+    .then(dcrRepositoryApi.testRepository)
+    .then(data => {
+      return new Promise((resolve, reject) => {
+        Repository.findOneAndUpdate({ repository: req.query.repository }, { $set: { isConnect: data } }, { new: true })
+          .select({
+            _id: 0,
+            updated_at: 0,
+            created_at: 0
+          })
+          .then(doc => {
+            resolve(doc)
+          })
+          .catch(err => {
+            reject(new dbException(err))
+          })
+      })
+    })
+    .then(data => {
+      info(`testRepository: complete`)
+      resSuc(res, data)
+    })
+    .catch(err => {
+      warn(`testRepository: fail`)
+      resErr(res, err)
     })
 }
 

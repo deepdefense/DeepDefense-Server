@@ -62,7 +62,7 @@ router.put('/logout', (req, res) => {})
  * 注册用户
  */
 router.post('/sysUser', (req, res) => {
-  User.register({ username: req.body.username }, req.body.password, (err, data) => {
+  User.register(new User({ username: req.body.username }), req.body.password, (err, data) => {
     if (err) {
       resErr(res, new paramsException(err.message))
     } else {

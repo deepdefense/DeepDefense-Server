@@ -1,0 +1,14 @@
+{
+  "right": {
+    "high": 8,
+    "medium": 4,
+    "low": 1,
+    "negligible": 0.2,
+    "unknown": 0.1
+  },
+  "loginUser": {
+    "username": "admin",
+    "role": "admin",
+    "passwd": "admin"
+  }
+}

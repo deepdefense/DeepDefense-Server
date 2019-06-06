@@ -1,30 +1,31 @@
+/**EXPORT MODULES */
 const express = require('express')
 const http = require('http')
 const mongoose = require('mongoose')
 const path = require('path')
-
-// session
+/**SESSION */
 const session = require('express-session')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const cookieParser = require('cookie-parser')
-// body parse
+/**BODY PARSE */
 const bodyParser = require('body-parser')
 
-// local require
-var config = require('./config.js')
-var { debug, info, warn, error } = require('./logger.js')
+/**COLLECTIONS */
 var user = require('../collections/user.js')
 const conf = require('../collections/config')
-var auth = require('../middlewares/isAuth.js') //  认证判断
 const repository = require('../collections/repository')
 const dockerImage = require('../collections/image')
 const vulnerability = require('../collections/vulnerability')
-const dockerRepository = require('./dockerRepository')
-const timedScan = require('./timedScan')
-const { dbException } = require('../class/exceptions')
+/**LOCAL MODULES */
+var config = require('./config.js')
 const util = require('./util')
+var auth = require('../middlewares/isAuth.js') //  认证判断
+const dcrRepositoryApi = require('./dcrRepositoryApi')
+const timedScan = require('./timedScan')
 const { databaseInit } = require('./databaseInit')
+var { debug, info, warn, error } = require('./logger.js')
+const { dbException } = require('../class/exceptions')
 
 var sessionOption = {
   resave: true, //  save the session to the session store
@@ -52,9 +53,9 @@ function startApp() {
   databaseInit()
   initApp(app)
   /**refresh all repositories image list */
-  // setInterval(dockerRepository.freshRepository, 1000 * 30)
+  // setInterval(dcrRepositoryApi.freshRepository, 1000 * 30)
   /**analyze image which cannot analyze first again */
-  // setInterval(dockerRepository.freshImage, 1000 * 60 * 60)
+  // setInterval(dcrRepositoryApi.freshImage, 1000 * 60 * 60)
   var server = http.Server(app)
   server.listen(app.get('port'), function() {
     info('listen at port:' + app.get('port'))

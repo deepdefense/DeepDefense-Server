@@ -1,69 +1,81 @@
+/**export modules */
+const path = require('path')
+const fs = require('fs')
+/**collections */
 const User = require('../collections/user')
 const Config = require('../collections/config')
+/**local modules */
 const { debug, info, warn, err } = require('./logger')
 const { dbException } = require('../class/exceptions')
 
+const { right, loginUser } = fs.readFileSync(path.join(__dirname, `../config/init.json`))
+
 const logInUserInit = () => {
-  User
-    .deleteMany({})
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        User
-          .register(
-            {
-              username: 'admin',
-              role: 'admin'
+  return new Promise((resolve, reject) => {
+    User.deleteMany({})
+      .then(() => {
+        User.register(
+          new User({
+            username: loginUser.username,
+            role: loginUser.role
+          }),
+          loginUser.passwd
+        )
+          .then(
+            doc => {
+              if (doc) {
+                info(`user init complete`)
+                resolve(0)
+              } else {
+                throw new Error(`user init fail`)
+              }
             },
-            'admin123'
-          )
-          .then(data => {
-            if (data) {
-              info(`user init`)
-            } else {
-              throw new Error(`user init fail`)
+            err => {
+              throw new dbException(err)
             }
-          })
+          )
           .catch(err => {
-            error(err)
+            throw err
           })
       })
-    })
-    .catch(err => {
-      error(err)
-    })
+      .catch(err => {
+        error(err)
+        resolve(-1)
+      })
+  })
 }
 
 const scoreRightInit = () => {
-  Config
-    .deleteMany({ key: 'SCORE' })
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        Config
-          .create({
-            key: 'SCORE',
-            description: 'score right config',
-            config: {
-              high: 8,
-              medium: 4,
-              low: 1,
-              negligible: 0.2,
-              unknown: 0.1
+  return new Promise((resolve, reject) => {
+    Config.deleteMany({ key: 'SCORE' })
+      .then(() => {
+        Config.create({
+          key: 'SCORE',
+          description: 'score right config',
+          config: right
+        })
+          .then(
+            doc => {
+              if (doc) {
+                info(`score right init complete`)
+                resolve(0)
+              } else {
+                throw new Error(`score right init fali`)
+              }
+            },
+            err => {
+              throw new dbException(err)
             }
-          })
-          .then(doc => {
-            resolve(doc)
-          })
+          )
           .catch(err => {
-            reject(err)
+            throw err
           })
       })
-    })
-    .then(data => {
-      info(`score right init`)
-    })
-    .catch(err => {
-      error(err)
-    })
+      .catch(err => {
+        error(err)
+        resolve(-1)
+      })
+  })
 }
 
 const databaseInit = () => {
@@ -80,17 +92,25 @@ const databaseInit = () => {
         })
       })
       .then(() => {
-        logInUserInit()
-        scoreRightInit()
-        Config.create({
-          key: 'ISINIT',
-          description: 'database init flage',
-          config: true
-        }).then(data => {
-          info(`database init`)
-        }).catch(err => {
-          throw new dbException(err)
-        })
+        let pros = [logInUserInit(), scoreRightInit()]
+        Promise.all(pros)
+          .then(data => {
+            Config.create({
+              key: 'ISINIT',
+              description: 'database init flage',
+              config: true
+            })
+              .then(doc => {
+                info(`database init`)
+                resolve()
+              })
+              .catch(err => {
+                throw new dbException(err)
+              })
+          })
+          .catch(err => {
+            throw err
+          })
       })
       .catch(err => {
         if (err.message == 'exit') {
@@ -98,6 +118,7 @@ const databaseInit = () => {
         } else {
           warn(JSON.stringify(err.stack))
         }
+        resolve()
       })
   })
 }
