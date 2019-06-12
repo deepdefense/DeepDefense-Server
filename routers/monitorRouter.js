@@ -12,7 +12,7 @@ router.get('/rules/:rulename', monitorCtrl.getListByRule)
 router.put('/rules/:rulename', monitorCtrl.setListByRule)
 router.post('/monitor/stats', monitorCtrl.getStats)
 router.put('/rules', monitorCtrl.setRule)
-router.put('/enable', monitorCtrl.enableRules)
+router.post('/rules/enable', monitorCtrl.enableRules)
 
 /**CONTAINER GROUP MANAGE */
 router.get('/container', ctnGroupCtrl.getCtnGroupList)

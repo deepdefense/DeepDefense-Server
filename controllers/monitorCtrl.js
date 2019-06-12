@@ -9,7 +9,27 @@ const { debug, info, warn, error } = require('../services/logger')
 const { resSuc, resErr } = require('../services/util')
 const { dbException, paramsException, unconnectException } = require('../class/exceptions')
 
-const getEventPage = (req, res) => {}
+const getEventPage = (req, res) => {
+  Object.keys(req.body.output_fields).forEach(field => {
+    let newField = field.replace('.', '_')
+    req.body.output_fields[newField] = req.body.output_fields[field]
+    delete req.body.output_fields[field]
+  })
+  MonitorEvent.create(req.body)
+    .then(
+      doc => {
+        info(`get new monitor event`)
+        resSuc(res, 0)
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
+    .catch(err => {
+      warn(err)
+      resErr(res, -1)
+    })
+}
 
 /**
  * @function getStats get event count and event list
@@ -37,44 +57,82 @@ const getEventPage = (req, res) => {}
 const getStats = async (req, res) => {
   try {
     /**get monitor event list */
+    let queryOption = {}
+    /**get time search condition */
+    let [timeFrom, timeTo] = [req.body.must[0].from, req.body.must[0].to]
+    debug(JSON.stringify(req.body.must[0]))
+    if (timeFrom !== '' && timeTo !== '') {
+      timeFrom = new Date(timeFrom)
+      timeTo = new Date(timeTo)
+      queryOption.time = {
+        $lt: timeFrom,
+        $gt: timeTo
+      }
+    }
+    /**get field search condition */
+    let [searchField, searchValue] = [req.body.must[1].field, req.body.must[1].value]
+    if (searchValue !== '') {
+      searchValue = searchValue.trim().split(' ')
+      // fieldSeachOption = searchValue.map(key => {
+      //   return { $regex: key }
+      // })
+      // queryOption[searchField] = { $or: fieldSeachOption }
+      queryOption.$or = searchValue.map(key => {
+        let result = {}
+        result[searchField] = { $regex: key }
+        return result
+      })
+    }
+    /**get pagenation condition */
     let { size, from } = req.body.pagination
+    /**get sort condition */
     let { field, order } = req.body.sort
-    // let or = req.body.search.length !== 0 ? req.body.search.map(key => {
-    //   return { $or: [ { rule: key } ] }
-    // })
     let sortOption = {}
     sortOption[field] = order
-    let hits = await MonitorEvent.find({
-      //TODO
-    })
+    debug(JSON.stringify(queryOption, null, '\t'))
+    let hits = await MonitorEvent.find(queryOption)
       .sort(sortOption)
       .skip(from)
       .limit(size)
-      .map(doc => {
-        return {
-          _source: {
-            output: doc.output,
-            output_fields: doc.output_fields,
-            priority: doc.priority,
-            rule: doc.rule
-          }
-        }
+      .exec()
+      .then(docs => {
+        return new Promise((resolve, reject) => {
+          resolve(
+            docs.map(doc => {
+              return {
+                _source: {
+                  output: doc.output,
+                  output_fields: doc.output_fields,
+                  priority: doc.priority,
+                  rule: doc.rule,
+                  '@timestamp': doc.time
+                }
+              }
+            })
+          )
+        })
       })
 
     /**get count stats */
     let countResults = []
     let total = 0
     let priorities = ['Alert', 'Critical', 'Emergency', 'Error', 'infomational', 'Notice', 'Warning']
-    priorities.forEach(async priority => {
+    for (let priority of priorities) {
       let doc_count = await MonitorEvent.find({ priority: priority }).countDocuments()
+      debug(doc_count)
       total = total + doc_count
       countResults.push({
         key: priority,
         doc_count: doc_count
       })
-    })
+    }
     info(`get status: complete`)
-    resSuc(res, {
+    // resSuc(res, {
+    //   hits: hits,
+    //   priority: countResults,
+    //   total: total
+    // })
+    res.json({
       hits: hits,
       priority: countResults,
       total: total
@@ -101,7 +159,7 @@ const getRuleList = (req, res) => {
           }
         })
         info(`get rule list: complete`)
-        resSuc(res, results)
+        res.json(results)
       },
       err => {
         throw new dbException(err)
@@ -130,7 +188,14 @@ const getListByRule = (req, res) => {
     .then(
       doc => {
         if (doc) {
-          resSuc(res, doc)
+          res.json({
+            list: doc.list,
+            items: doc.items
+              ? doc.items.map(item => {
+                  return { data: item }
+                })
+              : []
+          })
         } else {
           throw new dbException(`${req.params.rulename}: No such list`)
         }
@@ -152,7 +217,7 @@ const setListByRule = (req, res) => {
     },
     {
       $set: {
-        items: req.body.iterms,
+        items: req.body.items,
         isUpdate: true
       }
     },
@@ -171,7 +236,7 @@ const setListByRule = (req, res) => {
         if (doc) {
           isDeploy = false
           info(`set list by rule: complete`)
-          resSuc(res, doc)
+          res.json(doc)
         } else {
           throw new dbException(`${req.params.list}: No such list`)
         }
@@ -242,7 +307,7 @@ const setRule = (req, res) => {
           doc => {
             if (doc) {
               info(`set rule: complete`)
-              resSuc(res, {
+              res.json({
                 _id: doc.monitorList,
                 _source: {
                   rulename: doc.rule
@@ -347,7 +412,7 @@ const enableRules = (req, res) => {
     })
     .then(data => {
       info(`enable rules: complete`)
-      resSuc(res, data)
+      res.json(data)
     })
     .catch(err => {
       warn(err)

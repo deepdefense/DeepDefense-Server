@@ -16,12 +16,15 @@ util.connectToMongodb()
 //     warn(JSON.stringify(err, null, '\t'))
 //   })
 
-CtnGroup.findOneAndDelete({
-  groupname: 'Defense'
-})
-  .then(data => {
-    debug(JSON.stringify(data, null, '\t'))
-  })
-  .catch(err => {
-    warn(JSON.stringify(err, null, '\t'))
-  })
+// CtnGroup.findOneAndDelete({
+//   groupname: 'Defense'
+// })
+//   .then(data => {
+//     debug(JSON.stringify(data, null, '\t'))
+//   })
+//   .catch(err => {
+//     warn(JSON.stringify(err, null, '\t'))
+//   })
+
+debug(new Date())
+debug(Date.parse(new Date()))

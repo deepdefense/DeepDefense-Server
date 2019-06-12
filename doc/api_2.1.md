@@ -52,9 +52,9 @@
     "rulename": "Rename sensitive files", //  [string] 对应规则名, 弃用参数
     "items": [
       //  [array] 规则参数列表
-      "/tmp/d.txt",
-      "/tmp/d1.txt",
-      "/tmp/d11.txt"
+      { "data": "/tmp/d.txt" },
+      { "data": "/tmp/d1.txt" },
+      { "data": "/tmp/d11.txt" }
     ],
     "list": "unrename_files" // [string] 列表名
   },

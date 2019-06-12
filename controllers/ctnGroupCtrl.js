@@ -21,7 +21,8 @@ const getCtnGroupList = (req, res) => {
     .then(
       docs => {
         info(`getCtnGroupList: complete`)
-        resSuc(res, docs)
+        // resSuc(res, docs)
+        res.json(docs)
       },
       err => {
         throw new dbException(err)
@@ -62,7 +63,11 @@ const createCtnGroup = (req, res) => {
         .then(doc => {
           if (doc) {
             info(`createCtnGroup: complete`)
-            resSuc(res, {
+            // resSuc(res, {
+            //   members: doc.members,
+            //   groupname: doc.groupname
+            // })
+            res.json({
               members: doc.members,
               groupname: doc.groupname
             })
@@ -110,7 +115,8 @@ const setCtnGroup = (req, res) => {
       doc => {
         if (doc) {
           info(`setCtnGroup: complete`)
-          resSuc(res, doc)
+          // resSuc(res, doc)
+          res.json(doc)
         } else {
           throw new dbException(`${req.body.groupname}: No such doc in DB`)
         }
@@ -149,7 +155,8 @@ const deleteCtnGroup = (req, res) => {
             }
           }
           info(`deleteCtnGroup: complete`)
-          resSuc(res, doc)
+          // resSuc(res, doc)
+          res.json(doc)
         } else {
           throw new dbException(`${req.query.groupname}: No such doc in DB`)
         }
