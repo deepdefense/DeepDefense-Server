@@ -5,7 +5,7 @@ const Image = require('../collections/image')
 const Vulnerability = require('../collections/vulnerability')
 const Conf = require('../collections/config')
 /**LOCAL MODULES */
-const io = require('./socketService')
+const io = require('./socketServices')
 const { debug, info, warn, error } = require('./logger')
 const { dbException, clairException, paramsException } = require('../class/exceptions')
 

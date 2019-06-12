@@ -4,11 +4,13 @@ const fs = require('fs')
 /**collections */
 const User = require('../collections/user')
 const Config = require('../collections/config')
+const MonitorRule = require('../collections/monitorRule')
+const MonitorList = require('../collections/monitorList')
 /**local modules */
-const { debug, info, warn, err } = require('./logger')
+const { debug, info, warn, error } = require('./logger')
 const { dbException } = require('../class/exceptions')
 
-const { right, loginUser } = fs.readFileSync(path.join(__dirname, `../config/init.json`))
+const { right, loginUser, rules, lists } = JSON.parse(fs.readFileSync(path.join(__dirname, `../config/init.json`)))
 
 const logInUserInit = () => {
   return new Promise((resolve, reject) => {
@@ -78,6 +80,54 @@ const scoreRightInit = () => {
   })
 }
 
+const ruleInit = () => {
+  return new Promise((resolve, reject) => {
+    MonitorRule.deleteMany()
+      .then(() => {
+        let pros = []
+        for (let rule of rules) {
+          pros.push(MonitorRule.create(rule))
+        }
+        Promise.all(pros)
+          .then(docs => {
+            info(`rules init compelte`)
+            resolve(0)
+          })
+          .catch(err => {
+            throw new dbException(err)
+          })
+      })
+      .catch(err => {
+        error(err)
+        resolve(-1)
+      })
+  })
+}
+
+const listInit = () => {
+  return new Promise((resolve, reject) => {
+    MonitorList.deleteMany()
+      .then(() => {
+        let pros = []
+        for (let list of lists) {
+          pros.push(MonitorList.create(list))
+        }
+        Promise.all(pros)
+          .then(docs => {
+            info(`list init compelte`)
+            resolve(0)
+          })
+          .catch(err => {
+            throw new dbException(err)
+          })
+      })
+      .catch(err => {
+        error(err)
+        resolve(-1)
+      })
+  })
+}
+
 const databaseInit = () => {
   return new Promise((resolve, reject) => {
     Config.findOne({ key: 'ISINIT' })
@@ -92,7 +142,7 @@ const databaseInit = () => {
         })
       })
       .then(() => {
-        let pros = [logInUserInit(), scoreRightInit()]
+        let pros = [logInUserInit(), scoreRightInit(), ruleInit(), listInit()]
         Promise.all(pros)
           .then(data => {
             Config.create({
@@ -126,5 +176,7 @@ const databaseInit = () => {
 module.exports = {
   logInUserInit,
   scoreRightInit,
+  ruleInit,
+  listInit,
   databaseInit
 }

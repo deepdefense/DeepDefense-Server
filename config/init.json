@@ -10,5 +10,205 @@
     "username": "admin",
     "role": "admin",
     "passwd": "admin"
-  }
+  },
+  "rules": [
+    {
+      "rule": "Write sensitive files",
+      "desc": "an attempt to write to unwritable files",
+      "basicCondition": "(fd.name in (unwritable_files) or (sensitive_files))  and evt.dir = < and (open_write or evt.arg.flags contains O_WRONLY or proc.cmdline contains \"sed -i\")",
+      "output": "Unwritable files opened for writing (containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline file=%fd.name parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "ALERT",
+      "tags": [
+        "filesystem"
+      ],
+      "monitorList": "unwritable_files"
+    },
+    {
+      "rule": "Delete sensitive files",
+      "desc": "an attempt to delete sensitive files",
+      "basicCondition": "evt.arg.name in (undelete_files) and remove",
+      "output": "Delete sensitive files(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline file=%evt.arg.name parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "EMERGENCY",
+      "tags": [
+        "filesystem"
+      ],
+      "monitorList": "undelete_files"
+    },
+    {
+      "rule": "Rename sensitive files",
+      "desc": "an attempt to rename sensitive files",
+      "basicCondition": "evt.arg.oldpath in (unrename_files) and rename",
+      "output": "Rename sensitive files(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "EMERGENCY",
+      "tags": [
+        "filesystem"
+      ],
+      "monitorList": "unrename_files"
+    },
+    {
+      "rule": "Created file blew key directorys",
+      "desc": "an attempt to create a file below a set of key directories.",
+      "basicCondition": "fd.directory in (uncreated_dirs) and (evt.type = creat or (evt.type = open and evt.arg.flags contains O_CREAT)) and evt.arg.mode=\"0666\"",
+      "output": "\"Created a new file  below key directorys (user=%user.name command=%proc.cmdline directory=%evt.arg.path arg0=%evt.arg[0] arg1=%evt.arg[1] args=%evt.args containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline file=%fd.name parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] dirs=%fd.directory flags=%evt.arg.flags type1=%evt.type mode=%evt.arg.mode)\"",
+      "priority": "ERROR",
+      "tags": [
+        "filesystem"
+      ],
+      "monitorList": "uncreated_dirs"
+    },
+    {
+      "rule": "Read sensitive files",
+      "desc": "an attempt to read to sensitive files",
+      "basicCondition": "fd.name in (unread_files) and (open_read or evt.arg.flags contains O_RDONLY) and proc_name_exists",
+      "output": "Unwritable files opened for read (read=%evt.is_open_read type=%evt.type write=%evt.is_open_write filename=%fd.filename user=%user.name containerid=%container.id container=%container.name  command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline file=%fd.name program=%proc.name gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] args=%evt.args type=%evt.type)",
+      "priority": "WARNING",
+      "tags": [
+        "filesystem"
+      ],
+      "monitorList": "unread_files"
+    },
+    {
+      "rule": "Used software management tools in container",
+      "desc": "an attempt to login user containers",
+      "basicCondition": "proc.name in (user_soft_mgmts) and evt.type=execve",
+      "output": "Used software management tools in container(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "EMERGENCY",
+      "tags": [
+        "process"
+      ],
+      "monitorList": "user_soft_mgmts"
+    },
+    {
+      "rule": "Establish connection with untrusted port",
+      "desc": "an attempt to establish connection with untrusted port",
+      "basicCondition": "fd.port in (user_container_ports)",
+      "output": "Establish connection with untrusted port(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "ALERT",
+      "tags": [
+        "network"
+      ],
+      "monitorList": "user_container_ports"
+    },
+    {
+      "rule": "Used untrusted shells in container",
+      "desc": "an attempt to login user containers",
+      "basicCondition": "not proc.name in (user_trusted_shells) and evt.type=execve and container and container.id=111",
+      "output": "Used untrusted shells in container(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type )",
+      "priority": "ERROR",
+      "tags": [
+        "process"
+      ],
+      "monitorList": "user_trusted_shells"
+    },
+    {
+      "rule": "Login user containers",
+      "desc": "an attempt to login user containers",
+      "basicCondition": "container.name in (unlogin_containers) and evt.type=execve and container",
+      "output": "Login user containers(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type vpid=%proc.vpid)",
+      "priority": "ERROR",
+      "tags": [
+        "container"
+      ],
+      "monitorList": "unlogin_containders"
+    }
+  ],
+  "lists": [
+    {
+      "rulename": "Write sensitive files",
+      "items": [
+        "/etc/shadow",
+        "/etc/sudoers",
+        "/etc/pam.conf",
+        "/tmp/test.w",
+        "/tmp/d.txt",
+        "/tmp/d1112.txt"
+      ],
+      "list": "unwritable_files"
+    },
+    {
+      "rulename": "Delete important files",
+      "items": [
+        "/tmp/test_del1.txt",
+        "/tmp/test_del2.txt",
+        "/tmp/d.txt",
+        "/tmp/test",
+        "/tmp/test11/t"
+      ],
+      "list": "undelete_files"
+    },
+    {
+      "rulename": "Rename sensitive containers",
+      "items": [
+        "scanner-api-server"
+      ],
+      "list": "unrename_containers"
+    },
+    {
+      "rulename": "Establish connection with untrusted port",
+      "items": [
+        5001,
+        8011
+      ],
+      "list": "user_container_ports"
+    },
+    {
+      "rulename": "Login user containers",
+      "items": [
+        "defense-scanner",
+        "nginx",
+        "deepdefense-monitor",
+        "deepdefense"
+      ],
+      "list": "unlogin_containers"
+    },
+    {
+      "rulename": "Read sensitive files",
+      "items": [
+        "/tmp/test_read1.txt",
+        "/tmp/test_read2.txt",
+        "/tmp/d.txt"
+      ],
+      "list": "unread_files"
+    },
+    {
+      "rulename": "Used software management tools in container",
+      "items": [
+        "apt",
+        "apt-get",
+        "git",
+        "wget"
+      ],
+      "list": "user_soft_mgmts"
+    },
+    {
+      "rulename": "Rename sensitive files",
+      "items": [
+        "/tmp/d.txt",
+        "/tmp/d1.txt",
+        "/tmp/d11.txt"
+      ],
+      "list": "unrename_files"
+    },
+    {
+      "rulename": "Used untrusted shells in container",
+      "items": [
+        "ls",
+        "bash",
+        "sh",
+        "date",
+        "ps"
+      ],
+      "list": "user_trusted_shells"
+    },
+    {
+      "rulename": "Created file blew key directorys",
+      "items": [
+        "/var/local/",
+        "/tmp/test",
+        123,
+        1123
+      ],
+      "list": "uncreated_dirs"
+    }
+  ]
 }

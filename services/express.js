@@ -93,7 +93,8 @@ function initApp(app) {
   app.use('/api/repository', auth, require('../routers/repositoryRouter'))
   app.use('/api/scanner', auth, require('../routers/scannerRouter'))
   app.use('/api/score', auth, require('../routers/scoreRouter'))
-  app.use('/api/monitor', auth, require('../routers/monitorRouter'))
+  app.use('/v1_1/', auth, require('../routers/monitorRouter'))
+  app.use
 }
 
 module.exports = {

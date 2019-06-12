@@ -12,16 +12,16 @@ const { dbException, paramsException } = require('../class/exceptions')
 function getPage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
-  let and =
+  let or =
     req.body.search && req.body.search.length !== 0
-      ? req.body.search.map(function(key) {
+      ? req.body.search.map(key => {
           return { $or: [{ image: { $regex: key } }, { tag: { $regex: key } }] }
         })
       : null
   let sortOption = {}
   sortOption[field] = order
   dockerImage
-    .find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository })
+    .find(or ? { $or: or, repository: req.body.repository } : { repository: req.body.repository })
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -47,7 +47,7 @@ function getPage(req, res) {
       }
       resSuc(res, {
         docs,
-        count: await dockerImage.find(and ? { $and: and, repository: req.body.repository } : { repository: req.body.repository }).countDocuments()
+        count: await dockerImage.find(or ? { $or: or, repository: req.body.repository } : { repository: req.body.repository }).countDocuments()
       })
     })
 }
@@ -83,7 +83,7 @@ function getImage(req, res) {
 function getImagePage(req, res) {
   let { size, from } = req.body.pagination
   let { field, order } = req.body.sort
-  let and =
+  let or =
     req.body.search && req.body.search.length !== 0
       ? req.body.search.map(function(key) {
           return { cveId: { $regex: key } }
@@ -95,9 +95,9 @@ function getImagePage(req, res) {
   console.time('searchDB')
   dockerVulnerability
     .find(
-      and
+      or
         ? {
-            $and: and,
+            $or: or,
             repository: req.body.repository,
             image: req.body.image,
             tag: req.body.tag
@@ -136,9 +136,9 @@ function getImagePage(req, res) {
         docs,
         count: await dockerVulnerability
           .countDocuments(
-            and
+            or
               ? {
-                  $and: and,
+                  $or: or,
                   repository: req.body.repository,
                   image: req.body.image,
                   tag: req.body.tag
@@ -150,9 +150,9 @@ function getImagePage(req, res) {
                 }
           )
           .find(
-            and
+            or
               ? {
-                  $and: and,
+                  $or: or,
                   repository: req.body.repository,
                   image: req.body.image,
                   tag: req.body.tag

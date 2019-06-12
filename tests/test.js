@@ -1,37 +1,27 @@
-const { dbException } = require('../class/exceptions')
-const { get } = require('../services/util')
+/**COLLECTIONS */
+const CtnGroup = require('../collections/ctnGroup')
+/**LOCAL MODULES */
 const { debug } = require('../services/logger')
+const util = require('../services/util')
 
-function fun() {
-  return new Promise(function(resolve, reject) {
-    resolve(123)
-  })
-}
+util.connectToMongodb()
 
-// function fun1() {
-//     return new Promise(function (resovle, reject) {
+// CtnGroup.create({
+//   groupname: 'Defense'
+// })
+//   .then(data => {
+//     debug(JSON.stringify(data, null, '\t'))
+//   })
+//   .catch(err => {
+//     warn(JSON.stringify(err, null, '\t'))
+//   })
 
-//     })
-// }
-
-// try {
-//     fun()
-//     .then(function (data) {
-//         throw new Error(123)
-//     })
-//     .catch(function (error) {
-//         throw new dbException(error)
-//     });
-// } catch(error) {
-//     console.log(error);
-// }
-
-get({
-  url: 'http://192.168.4.56',
-  username: null,
-  passwd: null
+CtnGroup.findOneAndDelete({
+  groupname: 'Defense'
 })
-  .then()
+  .then(data => {
+    debug(JSON.stringify(data, null, '\t'))
+  })
   .catch(err => {
-    debug(err)
+    warn(JSON.stringify(err, null, '\t'))
   })

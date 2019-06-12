@@ -1,21 +1,23 @@
-/**export modules */
+/**EXPORT MODULES */
 const router = require('express').Router()
-/**collections */
-/**local modules */
+/**LOCAL MODULES */
 const monitorCtrl = require('../controllers/monitorCtrl')
-const { debug } = require('../services/logger')
+const ctnGroupCtrl = require('../controllers/ctnGroupCtrl')
 
-/**get events from source */
-// router.post('/getEvent', monitorCtrl.getEvent)
-// router.get('/list', monitorCtrl.getLists)
-// router.get('/list/:rulename', monitorCtrl.getListByName)
-// router.put('/list/:rulename', monitorCtrl.setListByName)
-// router.post('/event', monitorCtrl.getEventPage)
-// router.post('/status', monitorCtrl.getStatus)
-/**container manager */
-// router.get('/container', monitorCtrl.getContainerList)
-// router.post('/container', monitorCtrl.addContainer)
-// router.put('/container', monitorCtrl.setContainer)
-// router.delete('/container', monitorCtrl.delContainer)
+/**EVENT */
+router.post('/getEvent', monitorCtrl.getEventPage)
+/**LIST */
+router.get('/rules', monitorCtrl.getRuleList)
+router.get('/rules/:rulename', monitorCtrl.getListByRule)
+router.put('/rules/:rulename', monitorCtrl.setListByRule)
+router.post('/monitor/stats', monitorCtrl.getStats)
+router.put('/rules', monitorCtrl.setRule)
+router.put('/enable', monitorCtrl.enableRules)
+
+/**CONTAINER GROUP MANAGE */
+router.get('/container', ctnGroupCtrl.getCtnGroupList)
+router.post('/container', ctnGroupCtrl.createCtnGroup)
+router.put('/container', ctnGroupCtrl.setCtnGroup)
+router.delete('/container/:groupname', ctnGroupCtrl.deleteCtnGroup)
 
 module.exports = router
