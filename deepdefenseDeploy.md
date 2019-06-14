@@ -1,5 +1,7 @@
-###  Loclhost Prework
-####  path:
+### Loclhost Prework
+
+#### path:
+
 - confPath: /etc/deepdefense/
 - logPath: /var/deepdefense/...
   - scanner: scannerLog/
@@ -9,13 +11,13 @@
 sudo mkdir /etc/deepdefense
 sudo mkdir -p /var/deepdefense/scannerLog /var/deepdefense/portalLog
 ```
-####  set docker /etc/docker/daemon.json
+
+#### set docker /etc/docker/daemon.json
+
 ```json
 {
-  "registry-mirrors":  [ "https://registry.docker-cn.com" ],
-  "insecure-registries": [
-    "localhost:4003"
-  ],
+  "registry-mirrors": ["https://registry.docker-cn.com"],
+  "insecure-registries": ["localhost:4003"],
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "100M",
@@ -23,7 +25,9 @@ sudo mkdir -p /var/deepdefense/scannerLog /var/deepdefense/portalLog
   }
 }
 ```
-####  get source code && image
+
+#### get source code && image
+
 - scanner(source code)
 - portal(source code)
 - mongo(image)
@@ -31,6 +35,7 @@ sudo mkdir -p /var/deepdefense/scannerLog /var/deepdefense/portalLog
 - node(image)
 - clair(source code)
 - postgres(image)
+- falco(image)
 
 ```shell
 cd $SRC
@@ -51,9 +56,12 @@ sudo git clone http://192.168.3.2/xCloud/DeepDefence-web.git (feat/tabs)
 sudo git clone http://192.168.3.2/DeepDefense/scanner.git (master)
 sudo git clone http://192.168.3.2/DeepDefense/portal.git (master)
 ```
-####  init && build docker image
--  claire
--  vim Dockerfile
+
+#### init && build docker image
+
+- claire
+- vim Dockerfile
+
 ```dockerfile
 FROM golang:1.10-alpine
 
@@ -71,25 +79,33 @@ RUN apk add --no-cache git rpm xz && \
 
 ENTRYPOINT ["/deepdefense-scanner"]
 ```
+
 sudo docker build -t deepdefense-scanner:v2.0
+
 - scanner
+
 ```shell
 cd $SRC/scanner && sudo docker build -t scanner-api-server:1.2.0 .
 ```
+
 - porttal
+
 ```shell
 cd $SRC/DeepDefence-web && npm run build
 mv dist/* $SRC/portal/
 cd $SRC/portal
 sudo docker build -t deepdefense-portal:v2.1 .
 ```
+
 - registry
+
 ```shell
 # $SRC/registry: image location
 sudo mkdir -p $SRC/registry/auth && sudo mkdir $SRC/registry/config
 sudo docker run --entrypoint htpasswd registry -Bbn {user} {passwd}  >> $SRC/registry/auth/htpasswd
 sudo vim $SRC/registry/config/config.yml
 ```
+
 ```yml
 version: 0.1
 log:
@@ -112,11 +128,13 @@ health:
     interval: 10s
 threshold: 3
 ```
-###  start container
-```shell
+
+### start container
+
+````shell
 #set network
 sudo docker network create deepdefense
-#add such params running container, allow config file use hostname instand ip 
+#add such params running container, allow config file use hostname instand ip
 --net deepdefense --hostname XXX
 
 #registry with auth
@@ -140,8 +158,8 @@ sudo docker run --restart=always --name deepdefense-scanner -d -p 6060-6061:6060
 sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-4001 -v /etc/deepdefense:/etc/deepdefense scanner-api-server:2.1.X
 
 #portal
-sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1 
+sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1
 
 #falco
 sudo docker run  --privileged --restart=always --name deepdefense-monitor -d -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /etc/deepdefense/deepdefense-monitor-config.yaml:/etc/falco/falco.yaml -v /etc/deepdefense-monitor-rules.yaml:/etc/falco/falco_rules.local.yaml deepdefense-monitor:0.15.0
-```ls
+````

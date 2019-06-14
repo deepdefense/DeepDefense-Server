@@ -1,51 +1,74 @@
 #instand of $SRC with absolute path
 version: '2'
 services:
-  deepdefense-db:
-    image: deepdefense-db:4.0.9
-    container_name: deepdefense-db
+  DeepDefense-db:
+    image: DeepDefense-db:4.0.9
+    container_name: DeepDefense-db
     restart: always
     ports:
       - '27017:27017'
+    networks:
+      - DeepDefense
+    environment:
+      - HOSTNAME: DeepDefense-db
 
-  deepdefense-cve:
-    image: deepdefense-cve:9.6
-    container_name: deepdefense-cve
+  DeepDefense-cve:
+    image: DeepDefense-cve:9.6
+    container_name: DeepDefense-cve
     restart: always
     ports:
       - '5432:5432'
     environment:
       - POSTRES_PASSWD=""
+      - HOSTNAME: DeepDefense-cve
+    networks:
+      - DeepDefense
 
-  deepdefense-scanner:
-    image: deepdefense-scanner:2.0
-    container_name: deepdefense-scanner
+  DeepDefense-scanner:
+    image: DeepDefense-scanner:2.0
+    container_name: DeepDefense-scanner
     restart: always
     depends_on:
-      - deepdefense-cve
+      - DeepDefense-cve
     volumes:
-      - '/home/guyi/deepdefense-scanner/config:/config'
+      - '/home/guyi/DeepDefense-scanner/config:/config'
     ports:
       - '6060-6061:6060-6061'
     command: -config=/config/config.yaml
+    networks:
+      - DeepDefense
+    environment:
+      - HOSTNAME: DeepDefense-scanner
 
-  scanner-api-server:
-    image: scanner-api-server:2.0.3
-    container_name: scanner-api-server
+  DeepDefense-api-server:
+    image: DeepDefense-api-server:2.1.2
+    container_name: DeepDefense-api-server
     restart: always
     depends_on:
-      - deepdefense-db
-      - deepdefense-scanner
+      - DeepDefense-db
+      - DeepDefense-scanner
     volumes:
-      - '/etc/deepdefense:/etc/deepdefense'
+      - '/etc/DeepDefense:/etc/DeepDefense'
     ports:
       - '4000-4001:4000-4001'
+    networks:
+      - DeepDefense
+    enviroment:
+      - HOSTNAME: DeepDefense-api-server
 
-  deepdefense-portal:
-    image: deepdefense-portal:v2.1
-    container_name: deepdefense-portal
+  DeepDefense-portal:
+    image: DeepDefense-portal:v2.1
+    container_name: DeepDefense-portal
     restart: always
     depends_on:
-      - scanner-api-server
+      - DeepDefense-api-server
     ports:
       - '4002:5001'
+    networks:
+      - DeepDefense
+    environment:
+      - HOSTNAME: DeepDefense-portal
+
+networks:
+  DeepDefense:
+    driver: bridge

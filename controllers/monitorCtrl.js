@@ -258,14 +258,14 @@ const setListByRule = (req, res) => {
  */
 const setRule = (req, res) => {
   MonitorRule.findOne({
-    rule: req.body.rule
+    rule: req.body._source.rulename
   })
     .then(
       doc => {
         let condition = ''
         if (doc) {
           return new Promise((resolve, reject) => {
-            if (req.body.ctnGroups.length !== 0) {
+            if (req.body._source.ctnGroups.length !== 0) {
               for (let i in req.body.ctnGroups) {
                 if (i == 0) {
                   condition = `${condition} container.name in (${req.body.ctnGroups[i]})`
@@ -280,7 +280,7 @@ const setRule = (req, res) => {
             resolve(condition)
           })
         } else {
-          throw new dbException(`${req.body.rule}: No such rule`)
+          throw new dbException(`${req.body._source.rulename}: No such rule`)
         }
       },
       err => {
@@ -290,12 +290,12 @@ const setRule = (req, res) => {
     .then(data => {
       MonitorRule.findOneAndUpdate(
         {
-          rule: req.body.rule
+          rule: req.body._source.rulename
         },
         {
           $set: {
             condition: data,
-            ctnGroups: req.body.ctnGroups,
+            ctnGroups: req.body._source.ctnGroups,
             isUpdate: true
           }
         },
@@ -315,7 +315,7 @@ const setRule = (req, res) => {
                 ctnGroups: doc.ctnGroups
               })
             } else {
-              throw new dbException(`${req.body.rule}: No such rule`)
+              throw new dbException(`${req.body._source.rulename}: No such rule`)
             }
           },
           err => {

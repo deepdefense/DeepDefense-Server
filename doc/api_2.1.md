@@ -255,6 +255,49 @@ groupname 参照获取容器组列表中参数 groupname
 
 ---
 
+#### 功能: 配置规则适用容器组
+
+#### 对应按钮: 无
+
+#### 请求地址: http://api_server_ip:4000/v1_1/rules
+
+#### 请求方法: PUT
+
+#### 请求参数: JSON
+
+```json
+{
+  "_id": "unwritable_files", //  [string] 规则对应参数列表
+  "_score": 0, //  [number] 规则编号
+  "_source": {
+    "rulename": "Write sensitive files" //  [string] 规则名
+  },
+  "ctnGroups": [] //  [array] 规则适用容器组
+}
+```
+
+#### 返回类型: JSON
+
+```json
+{
+  "code": 0, //  [number] 返回结果(0为正常)
+  "data": [
+    //  [array] 容器组列表
+    {
+      "members": [
+        //  [array] 容器组成员
+        "deepdefense-monitor",
+        "deepdefense-scanner"
+      ],
+      "groupname": "Defense" //  [string] 容器组名
+    }
+  ],
+  "message": "ok"
+}
+```
+
+---
+
 #### 功能: 生效规则配置
 
 #### 对应按钮: 无
