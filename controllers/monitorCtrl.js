@@ -60,7 +60,7 @@ const getStats = async (req, res) => {
     let queryOption = {}
     /**get time search condition */
     let [timeFrom, timeTo] = [req.body.must[0].from, req.body.must[0].to]
-    debug(JSON.stringify(req.body.must[0]))
+    // debug(JSON.stringify(req.body.must[0]))
     if (timeFrom !== '' && timeTo !== '') {
       timeFrom = new Date(timeFrom)
       timeTo = new Date(timeTo)
@@ -89,7 +89,7 @@ const getStats = async (req, res) => {
     let { field, order } = req.body.sort
     let sortOption = {}
     sortOption[field] = order
-    debug(JSON.stringify(queryOption, null, '\t'))
+    // debug(JSON.stringify(queryOption, null, '\t'))
     let hits = await MonitorEvent.find(queryOption)
       .sort(sortOption)
       .skip(from)
@@ -187,23 +187,40 @@ const getListByRule = (req, res) => {
     })
     .then(
       doc => {
-        if (doc) {
-          res.json({
-            list: doc.list,
-            items: doc.items
-              ? doc.items.map(item => {
-                  return { data: item }
+        MonitorRule.findOne({
+          monitorList: req.params.rulename
+        })
+          .then(
+            rule => {
+              if (doc) {
+                res.json({
+                  list: doc.list,
+                  items: doc.items
+                    ? doc.items.map(item => {
+                        return { data: item }
+                      })
+                    : [],
+                  ctnGroups: rule.ctnGroups
                 })
-              : []
+              } else {
+                throw new dbException(`${req.params.rulename}: No such list`)
+              }
+            },
+            err => {
+              throw new dbException(err)
+            }
+          )
+          .catch(err => {
+            throw err
           })
-        } else {
-          throw new dbException(`${req.params.rulename}: No such list`)
-        }
       },
       err => {
         throw new dbException(err)
       }
     )
+    .catch(err => {
+      warn(err)
+    })
 }
 
 /**
@@ -258,14 +275,14 @@ const setListByRule = (req, res) => {
  */
 const setRule = (req, res) => {
   MonitorRule.findOne({
-    rule: req.body._source.rulename
+    monitorList: req.body.list
   })
     .then(
       doc => {
         let condition = ''
         if (doc) {
           return new Promise((resolve, reject) => {
-            if (req.body._source.ctnGroups.length !== 0) {
+            if (req.body.ctnGroups.length !== 0) {
               for (let i in req.body.ctnGroups) {
                 if (i == 0) {
                   condition = `${condition} container.name in (${req.body.ctnGroups[i]})`
@@ -280,7 +297,7 @@ const setRule = (req, res) => {
             resolve(condition)
           })
         } else {
-          throw new dbException(`${req.body._source.rulename}: No such rule`)
+          throw new dbException(`${req.body.list}: No such rule`)
         }
       },
       err => {
@@ -288,43 +305,46 @@ const setRule = (req, res) => {
       }
     )
     .then(data => {
-      MonitorRule.findOneAndUpdate(
-        {
-          rule: req.body._source.rulename
-        },
-        {
-          $set: {
-            condition: data,
-            ctnGroups: req.body._source.ctnGroups,
-            isUpdate: true
-          }
-        },
-        {
-          new: true
-        }
-      )
-        .then(
-          doc => {
-            if (doc) {
-              info(`set rule: complete`)
-              res.json({
-                _id: doc.monitorList,
-                _source: {
-                  rulename: doc.rule
-                },
-                ctnGroups: doc.ctnGroups
-              })
-            } else {
-              throw new dbException(`${req.body._source.rulename}: No such rule`)
+      return new Promise((resolve, reject) => {
+        MonitorRule.findOneAndUpdate(
+          {
+            monitorList: req.body.list
+          },
+          {
+            $set: {
+              condition: data,
+              ctnGroups: req.body.ctnGroups,
+              isUpdate: true
             }
           },
-          err => {
-            throw new dbException(err)
+          {
+            new: true
           }
         )
-        .catch(err => {
-          throw err
-        })
+          .then(
+            doc => {
+              if (doc) {
+                info(`set rule: complete`)
+                resSuc(res, {
+                  list: doc.monitorList,
+                  ctnGroups: doc.ctnGroups
+                })
+                // res.json({
+                //   list: doc.monitorList,
+                //   ctnGroups: doc.ctnGroups
+                // })
+              } else {
+                throw new dbException(`${req.body.list}: No such list`)
+              }
+            },
+            err => {
+              throw new dbException(err)
+            }
+          )
+          .catch(err => {
+            reject(err)
+          })
+      })
     })
     .catch(err => {
       warn(err)

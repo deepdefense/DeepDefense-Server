@@ -56,7 +56,8 @@
       { "data": "/tmp/d1.txt" },
       { "data": "/tmp/d11.txt" }
     ],
-    "list": "unrename_files" // [string] 列表名
+    "list": "unrename_files", // [string] 列表名
+    "ctnGroup": ["DeepDefense"]
   },
   "message": "ok"
 }
@@ -267,12 +268,9 @@ groupname 参照获取容器组列表中参数 groupname
 
 ```json
 {
-  "_id": "unwritable_files", //  [string] 规则对应参数列表
-  "_score": 0, //  [number] 规则编号
-  "_source": {
-    "rulename": "Write sensitive files" //  [string] 规则名
-  },
-  "ctnGroups": [] //  [array] 规则适用容器组
+  "list": "unwritable_files", //  [string] 规则对应参数列表
+  "rulename": "Write sensitive files", //  [string] 规则名
+  "ctnGroups": ["DeepDefense"] //  [array] 规则适用容器组
 }
 ```
 
@@ -281,17 +279,11 @@ groupname 参照获取容器组列表中参数 groupname
 ```json
 {
   "code": 0, //  [number] 返回结果(0为正常)
-  "data": [
-    //  [array] 容器组列表
-    {
-      "members": [
-        //  [array] 容器组成员
-        "deepdefense-monitor",
-        "deepdefense-scanner"
-      ],
-      "groupname": "Defense" //  [string] 容器组名
-    }
-  ],
+  "data": {
+    "list": "unwritable_files", //  [string] 规则对应参数列表
+    "rulename": "Write sensitive files", //  [string] 规则名
+    "ctnGroups": ["DeepDefense"] //  [array] 规则适用容器组
+  },
   "message": "ok"
 }
 ```
