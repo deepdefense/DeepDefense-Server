@@ -269,7 +269,6 @@ groupname 参照获取容器组列表中参数 groupname
 ```json
 {
   "list": "unwritable_files", //  [string] 规则对应参数列表
-  "rulename": "Write sensitive files", //  [string] 规则名
   "ctnGroups": ["DeepDefense"] //  [array] 规则适用容器组
 }
 ```
