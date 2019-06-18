@@ -1,8 +1,11 @@
+'use strict'
 /**COLLECTIONS */
 const Repository = require('../collections/repository')
 const Image = require('../collections/image')
 /**LOCAL MODULES */
 const util = require('./util')
+const repositoryServices = require('./repositoryServices')
+const scannerApi = require('./scannerApi')
 const { debug, info, warn, error } = require('./logger')
 const { dbException, clairException, paramsException } = require('../class/exceptions')
 
@@ -152,8 +155,84 @@ const getTagByImage = data => {
   })
 }
 
+const freshRepository = () => {
+  Repository.find({})
+    .then(
+      docs => {
+        docs.forEach(doc => {
+          getImageByRepository(doc)
+            .then(getTagByImage)
+            .then(repositoryServices.removeImages)
+            .then(data => {
+              return new Promise(async (resolve, reject) => {
+                for (let image of repositoryServices.formatResponse(data)) {
+                  try {
+                    await repositoryServices.saveImage(image)
+                  } catch (err) {
+                    warn(err)
+                  }
+                }
+                resolve(data)
+              })
+            })
+            .then(scannerApi.analyzeImage)
+            .catch(err => {
+              warn(err)
+            })
+        })
+      },
+      err => {
+        throw new dbException(err)
+      }
+    )
+    .catch(err => {
+      warn(err)
+    })
+}
+
+const freshImage = () => {
+  Image.find({ score: -1, isEnable: true }).then(docs => {
+    docs.forEach(doc => {
+      Repository.findOne({
+        repository: doc.repository.split(':')[0]
+      })
+        .then(repoDoc => {
+          return new Promise((resolve, reject) => {
+            resolve({
+              repository: repoDoc.repository,
+              port: repoDoc.port,
+              username: repoDoc.username,
+              passwd: repoDoc.passwd,
+              isHttps: repoDoc.isHttps,
+              isAuth: repoDoc.isAuth,
+              image: doc.image,
+              tag: doc.tag
+            })
+          })
+        })
+        .then(scannerAPi.clairAnalyze)
+        .then(analyzeResult => {
+          repositoryServices.saveImage([analyzeResult.result]).catch(err => {
+            warn(err.stack)
+          })
+          repositoryServices
+            .removeVulnerabilities({ data: analyzeResult })
+            .then(repositoryServices.saveVulnerabilities)
+            .catch(err => {
+              warn(err.stack)
+            })
+        })
+        .catch(err => {
+          warn(err)
+        })
+    })
+  })
+}
+
 module.exports = {
   testRepository,
   getImageByRepository,
-  getTagByImage
+  getTagByImage,
+  freshRepository,
+  freshImage
 }

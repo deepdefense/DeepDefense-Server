@@ -4,6 +4,7 @@ const { Pool, Client } = pg
 const request = require('request')
 const zlib = require('zlib')
 const path = require('path')
+const preExec = require('child_process').exec
 const { debug, info, warn, error } = require('./logger')
 const config = require('./config')
 
@@ -26,6 +27,7 @@ const getMonitorConfPath = () => {
 
 const getMonitorRulePath = () => {
   return `/etc/deepdefense/deepdefense-monitor-rules.yaml`
+  // return `/etc/deepdefense/deepdefense-monitor-rules-test.yaml`
 }
 
 /**
@@ -143,11 +145,21 @@ const resErr = (res, error) => {
   })
 }
 
+const exec = cmd => {
+  return new Promise((resolve, reject) => {
+    preExec(cmd, (err, stdout, stderr) => {
+      debug(`\n--err--${err}\n--stdout--${stdout}\n--stderr--${stderr}`)
+      resolve({ err, stdout, stderr })
+    })
+  })
+}
+
 module.exports = {
   connectToMongodb,
   cvePool,
   resSuc,
   resErr,
+  exec,
   get,
   getMongoDBUrl,
   getScannerUrl,

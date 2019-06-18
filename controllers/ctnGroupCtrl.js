@@ -59,6 +59,7 @@ const createCtnGroup = (req, res) => {
       }
     )
     .then(data => {
+      data.isUpdate = true
       CtnGroup.create(data)
         .then(doc => {
           if (doc) {

@@ -3,6 +3,7 @@ const CtnGroup = require('../collections/ctnGroup')
 /**LOCAL MODULES */
 const { debug } = require('../services/logger')
 const util = require('../services/util')
+const databasInit = require('../services/databaseInit')
 
 util.connectToMongodb()
 
@@ -26,5 +27,8 @@ util.connectToMongodb()
 //     warn(JSON.stringify(err, null, '\t'))
 //   })
 
-debug(new Date())
-debug(Date.parse(new Date()))
+// debug(new Date())
+// debug(Date.parse(new Date()))
+
+databasInit.listInit()
+databasInit.ruleInit()

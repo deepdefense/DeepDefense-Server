@@ -1,0 +1,34 @@
+#!/bin/bash
+
+Path='/usr/bin/deepdefense'
+
+if [ $1 == 'start' ]
+then
+
+cd ${Path}${Server} && nohup  npm run start > ${LogPath}/server_log 2>&1 &
+${Path} 
+
+exit 0
+fi
+
+if [ $1 == 'stop' ]
+then
+Data=$(ps -A|grep -E 'prometheus|node|npm'|awk '{print $1}')
+array_ID=($Data)
+for ID in ${array_ID[@]}
+do
+#  echo $ID
+  sudo kill $ID
+done
+echo 'stop already'
+
+exit 0
+fi
+
+if [ $1 == 'restart' ]
+then
+./deepsphere stop
+./deepsphere start
+exit 0
+fi
+

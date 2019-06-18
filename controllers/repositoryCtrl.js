@@ -73,7 +73,7 @@ const addRepository = (req, res) => {
       }
     )
     /**test repository connection */
-    .then(scannerApi.testRepository)
+    .then(dcrRepositoryApi.testRepository)
     .then(isConnect => {
       return new Promise((resolve, reject) => {
         req.body.isConnect = isConnect
@@ -178,7 +178,7 @@ const setRepository = (req, res) => {
     resErr(res, new paramsException(`port illegal`))
     return
   }
-  scannerApi
+  dcrRepositoryApi
     .testRepository(req.body)
     .then(data => {
       return new Promise((resolve, reject) => {

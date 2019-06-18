@@ -86,6 +86,8 @@ const ruleInit = () => {
       .then(() => {
         let pros = []
         for (let rule of rules) {
+          rule.isUpdate = true
+          rule.condition = rule.basicCondition
           pros.push(MonitorRule.create(rule))
         }
         Promise.all(pros)
@@ -110,6 +112,7 @@ const listInit = () => {
       .then(() => {
         let pros = []
         for (let list of lists) {
+          list.isUpdate = true
           pros.push(MonitorList.create(list))
         }
         Promise.all(pros)

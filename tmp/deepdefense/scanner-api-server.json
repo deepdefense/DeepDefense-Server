@@ -1,0 +1,54 @@
+{
+  "dev": {
+    "auth": false,
+    "port": {
+      "http": 4003
+    },
+    "database": {
+      "ip": "192.168.3.124",
+      "port": 27018
+    },
+    "front": {
+      "socket": 4004
+    },
+    "log": {
+      "consoleLevel": "debug",
+      "timeFormat": "YYYY/MO/DD HH:MM:SS",
+      "path": "scannerLog/scanner.log"
+    },
+    "scanner": {
+      "ip": "192.168.10.112",
+      "port": 6060
+    },
+    "cve": {
+      "ip": "192.168.3.124",
+      "port": "5432"
+    }
+  },
+  "pro": {
+    "auth": false,
+    "port": {
+      "http": 4000
+    },
+    "database": {
+      "ip": "192.168.3.124",
+      "port": 27017
+    },
+    "front": {
+      "socket": 4001
+    },
+    "log": {
+      "consoleLevel": "debug",
+      "timeFormat": "YYYY/MO/DD HH:MM:SS",
+      "path": "scannerLog/scanner.log"
+    },
+    "scanner": {
+      "ip": "192.168.3.124",
+      "port": 6060
+    },
+    "cve": {
+      "ip": "192.168.3.124",
+      "port": "5432"
+    }
+  }
+}

@@ -21,7 +21,7 @@ function getPage(req, res) {
   let sortOption = {}
   sortOption[field] = order
   dockerImage
-    .find(or ? { $or: or, repository: req.body.repository } : { repository: req.body.repository })
+    .find(or ? { $or: or, repository: req.body.repository, isEnable: true } : { repository: req.body.repository, isEnable: true })
     .sort(sortOption)
     .skip(from)
     .limit(size)
@@ -47,7 +47,7 @@ function getPage(req, res) {
       }
       resSuc(res, {
         docs,
-        count: await dockerImage.find(or ? { $or: or, repository: req.body.repository } : { repository: req.body.repository }).countDocuments()
+        count: await dockerImage.find(or ? { $or: or, repository: req.body.repository, isEnable: true } : { repository: req.body.repository, isEnable: true }).countDocuments()
       })
     })
 }

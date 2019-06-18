@@ -1,6 +1,7 @@
 /**EXPORT MODULES */
 const clairClient = require('clair-client')
 /**LOCAL MODULES */
+const util = require('./util')
 const repositoryServices = require('./repositoryServices')
 const { debug, info, warn, error } = require('./logger')
 const { dbException, clairException, paramsException } = require('../class/exceptions')
@@ -142,14 +143,15 @@ const analyzeImage = data => {
           .then(data => {
             return new Promise((resolve, reject) => {
               /**remove old image docs of this repository */
-              saveImage(data.result)
-              removeVulnerabilities({
-                repository: data.result.repository,
-                image: data.result.image,
-                tag: data.result.tag
-              })
+              repositoryServices.saveImage(data.result)
+              repositoryServices
+                .removeVulnerabilities({
+                  repository: data.result.repository,
+                  image: data.result.image,
+                  tag: data.result.tag
+                })
                 .then(() => {
-                  saveVulnerabilities(data)
+                  repositoryServices.saveVulnerabilities(data)
                 })
                 .catch(err => {
                   warn(JSON.stringify(err.stack))

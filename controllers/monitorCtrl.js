@@ -11,10 +11,11 @@ const { dbException, paramsException, unconnectException } = require('../class/e
 
 const getEventPage = (req, res) => {
   Object.keys(req.body.output_fields).forEach(field => {
-    let newField = field.replace('.', '_')
+    let newField = field.replace(/\./g, '_')
     req.body.output_fields[newField] = req.body.output_fields[field]
     delete req.body.output_fields[field]
   })
+  debug(JSON.stringify(req.body, null, '\t'))
   MonitorEvent.create(req.body)
     .then(
       doc => {
@@ -61,12 +62,14 @@ const getStats = async (req, res) => {
     /**get time search condition */
     let [timeFrom, timeTo] = [req.body.must[0].from, req.body.must[0].to]
     // debug(JSON.stringify(req.body.must[0]))
-    if (timeFrom !== '' && timeTo !== '') {
+    if (timeFrom != '' && timeTo != '') {
       timeFrom = new Date(timeFrom)
       timeTo = new Date(timeTo)
+      debug(timeFrom)
+      debug(timeTo)
       queryOption.time = {
-        $lt: timeFrom,
-        $gt: timeTo
+        $gte: timeFrom,
+        $lte: timeTo
       }
     }
     /**get field search condition */
@@ -77,7 +80,7 @@ const getStats = async (req, res) => {
       //   return { $regex: key }
       // })
       // queryOption[searchField] = { $or: fieldSeachOption }
-      queryOption.$or = searchValue.map(key => {
+      queryOption.$and = searchValue.map(key => {
         let result = {}
         result[searchField] = { $regex: key }
         return result
@@ -88,8 +91,11 @@ const getStats = async (req, res) => {
     /**get sort condition */
     let { field, order } = req.body.sort
     let sortOption = {}
-    sortOption[field] = order
-    // debug(JSON.stringify(queryOption, null, '\t'))
+    filed = field.slice(0, -4)
+    filed = filed == '@times' ? 'time' : filed
+    sortOption[filed] = order
+    debug(`option`)
+    debug(JSON.stringify(sortOption, null, '\t'))
     let hits = await MonitorEvent.find(queryOption)
       .sort(sortOption)
       .skip(from)
@@ -118,7 +124,8 @@ const getStats = async (req, res) => {
     let total = 0
     let priorities = ['Alert', 'Critical', 'Emergency', 'Error', 'infomational', 'Notice', 'Warning']
     for (let priority of priorities) {
-      let doc_count = await MonitorEvent.find({ priority: priority }).countDocuments()
+      queryOption.priority = priority
+      let doc_count = await MonitorEvent.find(queryOption).countDocuments()
       debug(doc_count)
       total = total + doc_count
       countResults.push({
@@ -176,6 +183,10 @@ const getRuleList = (req, res) => {
  * @param: {} req
  */
 const getListByRule = (req, res) => {
+  if (req.params.rulename == 'undefined') {
+    resSuc(res, 'OK')
+    return
+  }
   MonitorList.findOne({
     list: req.params.rulename
   })
@@ -192,7 +203,7 @@ const getListByRule = (req, res) => {
         })
           .then(
             rule => {
-              if (doc) {
+              if (doc && rule) {
                 res.json({
                   list: doc.list,
                   items: doc.items
@@ -282,6 +293,12 @@ const setRule = (req, res) => {
         let condition = ''
         if (doc) {
           return new Promise((resolve, reject) => {
+            for (let index in req.body.ctnGroups) {
+              if (req.body.ctnGroups[index] == '') {
+                req.body.ctnGroups.splice(index, 1)
+                index -= 1
+              }
+            }
             if (req.body.ctnGroups.length !== 0) {
               for (let i in req.body.ctnGroups) {
                 if (i == 0) {

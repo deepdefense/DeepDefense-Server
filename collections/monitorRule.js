@@ -9,7 +9,7 @@ const MonitorRule = new Schema(
     basicCondition: { type: String, require: true, default: '', trim: true },
     output: { type: String, require: true, default: '', trim: true },
     priority: { type: String, require: true, default: '', trim: true },
-    tags: { type: Array, require: true, default: [] },
+    // tags: { type: Array, require: true, default: [] },
     ctnGroups: { type: Array, default: [] },
     monitorList: { type: String, require: true, default: '', trim: true },
     isUpdate: { type: Boolean, require: true, defaul: true }

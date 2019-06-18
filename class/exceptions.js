@@ -43,10 +43,30 @@ class fileException extends Error {
   }
 }
 
+class shellException extends Error {
+  constructor(message) {
+    super()
+    this.message = message
+    this.name = this.constructor.name
+    this.code = 5006
+  }
+}
+
+class commandException extends Error {
+  constructor(message) {
+    super()
+    this.message = message
+    this.name = this.constructor.name
+    this.code = 5007
+  }
+}
+
 module.exports = {
   dbException,
   paramsException,
   clairException,
   unconnectException,
-  fileException
+  fileException,
+  shellException,
+  commandException
 }

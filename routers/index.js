@@ -50,6 +50,10 @@ router.post('/login', (req, res) => {
     resSuc(res, {
       username: req.body.username
     })
+  } else {
+    resErr(res, {
+      username: req.body.username
+    })
   }
 })
 
