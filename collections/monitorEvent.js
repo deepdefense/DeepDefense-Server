@@ -1,6 +1,8 @@
 /**EXPORT MODULES */
 const mongoose = require('mongoose')
 const { Schema } = mongoose
+/**LOCAL MODULES */
+const { debug, info, warn, error } = require('../services/logger')
 
 const MonitorEvent = new Schema(
   {
@@ -17,5 +19,11 @@ const MonitorEvent = new Schema(
     }
   }
 )
+
+MonitorEvent.index({ time: -1, rule: 1 })
+
+MonitorEvent.on('index', err => {
+  info(err)
+})
 
 module.exports = mongoose.model('MonitorEvent', MonitorEvent)

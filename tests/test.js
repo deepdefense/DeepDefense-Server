@@ -30,5 +30,5 @@ util.connectToMongodb()
 // debug(new Date())
 // debug(Date.parse(new Date()))
 
-databasInit.listInit()
-databasInit.ruleInit()
+// databasInit.listInit()
+// databasInit.ruleInit()

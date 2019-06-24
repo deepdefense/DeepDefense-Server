@@ -126,7 +126,7 @@ const get = data => {
 }
 
 const resSuc = (res, data) => {
-  debug(`response.data: ${JSON.stringify(data)}`)
+  // debug(`response.data: ${JSON.stringify(data)}`)
   res.statusCode = 200
   res.json({
     code: 0,
@@ -136,7 +136,7 @@ const resSuc = (res, data) => {
 }
 
 const resErr = (res, error) => {
-  warn(`response.errorStack: ${JSON.stringify(error.stack)}`)
+  // warn(`response.errorStack: ${JSON.stringify(error.stack, null, '\t')}`)
   res.statusCode = 500
   res.json({
     code: error.code,

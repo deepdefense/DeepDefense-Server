@@ -6,7 +6,7 @@ const ctnGroupCtrl = require('../controllers/ctnGroupCtrl')
 const backupCtrl = require('../controllers/backupCtrl')
 
 /**EVENT */
-router.post('/getEvent', monitorCtrl.getEventPage)
+router.post('/getEvent', monitorCtrl.getEvent)
 /**LIST */
 router.get('/rules', monitorCtrl.getRuleList)
 router.get('/rules/:rulename', monitorCtrl.getListByRule)

@@ -10,15 +10,15 @@ const { debug, info, warn, error } = require('../services/logger')
 
 connectToMongodb()
 
-let pros = [MonitorRule.find({ isUpdate: true }), MonitorList.find({ isUpdate: true }), CtnGroup.find({ isUpdate: true })]
-Promise.all(pros)
-  .then(monitorServices.updateConf)
-  .then(data => {
-    debug(JSON.stringify(data, null, '\t'))
-  })
-  .catch(err => {
-    error(JSON.stringify(err.stack, null, '\t'))
-  })
+// let pros = [MonitorRule.find({ isUpdate: true }), MonitorList.find({ isUpdate: true }), CtnGroup.find({ isUpdate: true })]
+// Promise.all(pros)
+//   .then(monitorServices.updateConf)
+//   .then(data => {
+//     debug(JSON.stringify(data, null, '\t'))
+//   })
+//   .catch(err => {
+//     error(JSON.stringify(err.stack, null, '\t'))
+//   })
 
 // MonitorRule.updateMany(
 //   {
@@ -124,3 +124,11 @@ Promise.all(pros)
 //   })
 
 // monitorServices.test()
+
+MonitorRule.listIndexes()
+  .then(data => {
+    debug(JSON.stringify(data, null, '\t'))
+  })
+  .catch(err => {
+    error(JSON.stringify(err, null, '\t'))
+  })

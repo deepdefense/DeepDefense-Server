@@ -1,23 +1,23 @@
 #!/bin/bash
 
-Path='/usr/bin/deepdefense'
+Path='/usr/bin/'
+LogPath='/usr/log'
 
 if [ $1 == 'start' ]
 then
 
-cd ${Path}${Server} && nohup  npm run start > ${LogPath}/server_log 2>&1 &
-${Path} 
+cd ${Path} && sudo nohup  ./restartMonitor.sh /etc/deepdefense/deepdefense-monitor-rules.yaml ./md5file > ${Path}/output 2>&1 &
 
 exit 0
 fi
 
 if [ $1 == 'stop' ]
 then
-Data=$(ps -A|grep -E 'prometheus|node|npm'|awk '{print $1}')
+Data=$(ps -ax | grep -E 'restartMonitor'|awk '{print $1}')
 array_ID=($Data)
 for ID in ${array_ID[@]}
 do
-#  echo $ID
+  echo $ID
   sudo kill $ID
 done
 echo 'stop already'
@@ -31,4 +31,3 @@ then
 ./deepsphere start
 exit 0
 fi
-

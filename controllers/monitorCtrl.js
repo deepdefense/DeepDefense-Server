@@ -9,13 +9,13 @@ const { debug, info, warn, error } = require('../services/logger')
 const { resSuc, resErr } = require('../services/util')
 const { dbException, paramsException, unconnectException } = require('../class/exceptions')
 
-const getEventPage = (req, res) => {
+const getEvent = (req, res) => {
   Object.keys(req.body.output_fields).forEach(field => {
     let newField = field.replace(/\./g, '_')
     req.body.output_fields[newField] = req.body.output_fields[field]
     delete req.body.output_fields[field]
   })
-  debug(JSON.stringify(req.body, null, '\t'))
+  // debug(JSON.stringify(req.body, null, '\t'))
   MonitorEvent.create(req.body)
     .then(
       doc => {
@@ -94,8 +94,7 @@ const getStats = async (req, res) => {
     filed = field.slice(0, -4)
     filed = filed == '@times' ? 'time' : filed
     sortOption[filed] = order
-    debug(`option`)
-    debug(JSON.stringify(sortOption, null, '\t'))
+    // debug(JSON.stringify(sortOption, null, '\t'))
     let hits = await MonitorEvent.find(queryOption)
       .sort(sortOption)
       .skip(from)
@@ -126,7 +125,7 @@ const getStats = async (req, res) => {
     for (let priority of priorities) {
       queryOption.priority = priority
       let doc_count = await MonitorEvent.find(queryOption).countDocuments()
-      debug(doc_count)
+      // debug(doc_count)
       total = total + doc_count
       countResults.push({
         key: priority,
@@ -201,8 +200,8 @@ const getListByRule = (req, res) => {
         MonitorRule.findOne({
           monitorList: req.params.rulename
         })
-          .then(
-            rule => {
+          .then(rule => {
+            return new Promise((resolve, reject) => {
               if (doc && rule) {
                 res.json({
                   list: doc.list,
@@ -216,11 +215,8 @@ const getListByRule = (req, res) => {
               } else {
                 throw new dbException(`${req.params.rulename}: No such list`)
               }
-            },
-            err => {
-              throw new dbException(err)
-            }
-          )
+            })
+          })
           .catch(err => {
             throw err
           })
@@ -231,6 +227,7 @@ const getListByRule = (req, res) => {
     )
     .catch(err => {
       warn(err)
+      resErr(res, err)
     })
 }
 
@@ -380,6 +377,7 @@ const enableRules = (req, res) => {
     .then(monitorServices.updateConf)
     .then(data => {
       return new Promise((resolve, reject) => {
+        debug(1)
         MonitorRule.updateMany(
           {
             isUpdate: true
@@ -388,9 +386,6 @@ const enableRules = (req, res) => {
             $set: {
               isUpdate: false
             }
-          },
-          {
-            new: true
           }
         )
           .then(docs => {
@@ -403,6 +398,7 @@ const enableRules = (req, res) => {
     })
     .then(data => {
       return new Promise((resolve, reject) => {
+        debug(2)
         MonitorList.updateMany(
           {
             isUpdate: true
@@ -426,6 +422,7 @@ const enableRules = (req, res) => {
     })
     .then(data => {
       return new Promise((resolve, reject) => {
+        debug(3)
         CtnGroup.updateMany(
           {
             isUpdate: true
@@ -458,7 +455,7 @@ const enableRules = (req, res) => {
 }
 
 module.exports = {
-  getEventPage,
+  getEvent,
   getStats,
   getListByRule,
   setListByRule,

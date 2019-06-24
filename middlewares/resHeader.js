@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const config = require('../services/config')
 const { debug, info } = require('../services/logger')
 
 router.all('*', (req, res, next) => {
@@ -11,12 +12,7 @@ router.all('*', (req, res, next) => {
     next()
     return
   }
-  if (req.body && req.body !== '') {
-    info(`request.body: ${JSON.stringify(req.body)}`)
-  }
-  if (req.query && req.query !== '') {
-    info(`request.query: ${JSON.stringify(req.params)}`)
-  }
+  info(`${req.method}: http://BASICK_URL:${config.port.http}${req.path}\nbody: ${req.body ? JSON.stringify(req.body) : `NO BODY`}`)
   next()
 })
 

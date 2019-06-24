@@ -1,4 +1,5 @@
 #!/bin/bash
+echo 'start daemon'
 if [ ! $1 ] || [ ! $2 ] || [ ! -e $1 ]; then
   exit
 fi
@@ -16,7 +17,7 @@ while (true) ; do
   md5sum -c $2 --status
   if [ $? -gt 0 ]; then
     echo 123
-    
+
     sudo docker ps | grep deepdefense-monitor | awk '{print $1}' |xargs -i sudo docker restart {}
     createMd5file $1 $2
   fi

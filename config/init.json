@@ -51,7 +51,7 @@
       "basicCondition": "evt.arg.name in (undelete_files) and remove",
       "output": "Delete sensitive files(containerid=%container.id container=%container.name user=%user.name command=%proc.cmdline file=%evt.arg.name parent=%proc.pname pcmdline=%proc.pcmdline gparent=%proc.aname[2] args=%evt.args type=%evt.type)",
       "priority": "EMERGENCY",
-      "monitorList": "undeldete_files",
+      "monitorList": "undelete_files",
       "tags": [
         "filesystem"
       ]

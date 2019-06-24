@@ -23,6 +23,7 @@ const util = require('./util')
 var auth = require('../middlewares/isAuth.js') //  认证判断
 const dcrRepositoryApi = require('./dcrRepositoryApi')
 const repositoryService = require('./repositoryServices')
+const monitorServices = require('./monitorServices')
 const timedScan = require('./timedScan')
 const { databaseInit } = require('./databaseInit')
 var { debug, info, warn, error } = require('./logger.js')
@@ -54,7 +55,7 @@ function startApp() {
   databaseInit()
   initApp(app)
   /**refresh all repositories image list */
-  setInterval(dcrRepositoryApi.freshRepository, 1000 * 30)
+  setInterval(dcrRepositoryApi.freshRepository, 1000 * 60 * 60)
   /**analyze image which cannot analyze first again */
   setInterval(dcrRepositoryApi.freshImage, 1000 * 60 * 60)
   var server = http.Server(app)
@@ -95,7 +96,6 @@ function initApp(app) {
   app.use('/api/scanner', auth, require('../routers/scannerRouter'))
   app.use('/api/score', auth, require('../routers/scoreRouter'))
   app.use('/v1_1/', auth, require('../routers/monitorRouter'))
-  app.use
 }
 
 module.exports = {

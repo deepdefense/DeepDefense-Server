@@ -1,0 +1,16 @@
+[Unit]
+Description=this is deesphere daemon service
+ConditionPathExits=/usr/bin/deepdefense
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/deepdefense start
+ExecStop=/usr/bin/deepdefense stop
+ExecRestart=/usr/bin/deepdefense restart
+
+StandardOutput=tty
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

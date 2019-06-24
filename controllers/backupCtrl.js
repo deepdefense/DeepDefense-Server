@@ -181,9 +181,9 @@ const recoverBackup = (req, res) => {
       doc => {
         return new Promise((resolve, reject) => {
           if (doc) {
-            throw new dbException(`${req.params.id}: No such backup`)
-          } else {
             resolve()
+          } else {
+            throw new dbException(`${req.params.id}: No such backup`)
           }
         })
       },
@@ -192,6 +192,9 @@ const recoverBackup = (req, res) => {
       }
     )
     .then(() => {
+      res.json({
+        id: req.params.id
+      })
       docs = JSON.parse(fs.readFileSync(path.join(__dirname, `../backup/${req.params.id}`)))
       docs.forEach(doc => {
         MonitorEvent.findOneAndUpdate(
@@ -211,9 +214,6 @@ const recoverBackup = (req, res) => {
           .catch(err => {
             warn(err)
           })
-      })
-      res.json({
-        id: req.params.id
       })
     })
     .catch(err => {

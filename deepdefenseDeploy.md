@@ -146,8 +146,7 @@ sudo docker run --restart=always -d -p 5000:5000 -v $SRC/registry/:/var/lib/regi
 #mongodb local test
 #sudo docker run --restart=always --name deepdefense-db -d -p 27018:27017 deepfense-db:4.0.9
 #mongodb
-sudo docker run --restart=always --name deepdefense-db -d -p 27017:27017 deepfense-db:4.0.9
-
+sudo docker run --restart=always --name deepdefense-db -d -p 27017:27017 -v /var/mongo/db:/data/db deepfense-db:4.0.9
 #postgres
 sudo docker run --restart=always --name deepdefense-cve -d -e POSTRES_PASSWD="" -p 5432:5432 deepdefense-cve:9.6
 
@@ -161,5 +160,5 @@ sudo docker run --restart=always --name scanner-api-server -d -p 4000-4001:4000-
 sudo docker run --restart=always --name deepdefense-portal -d -p 4002:5001 deepdefense-portal:v2.1.1
 
 #falco
-sudo docker run  --privileged --restart=always --name deepdefense-monitor -d -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /etc/deepdefense/deepdefense-monitor-config.yaml:/etc/falco/falco.yaml -v /etc/deepdefense/deepdefense-monitor-rules.yaml:/etc/falco/falco_rules.local.yaml deepdefense-monitor:0.15.0
+sudo docker run  --privileged --restart=always --name deepdefense-monitor -d -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /etc/deepdefense/deepdefense-monitor-config.yaml:/etc/falco/falco.yaml -v /etc/deepdefense/deepdefense-monitor-rules.yaml:/etc/falco/falco_rules.local.yaml -v /etc/deepdefense/deepdefense-monitor-rules.default.yaml:/etc/falco/falco_rules.yaml deepdefense-monitor:0.15.0
 ```

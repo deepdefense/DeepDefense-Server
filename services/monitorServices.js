@@ -7,10 +7,11 @@ const { Pair, YAMLMap, YAMLSeq } = require('yaml/types')
 /**COLLECTIONS */
 const MonitorRule = require('../collections/monitorList')
 const MonitorList = require('../collections/monitorRule')
+const MonitorEvent = require('../collections/monitorEvent')
 /**LOCAL MODUELS */
 const util = require('./util')
 const { debug, info, warn, error } = require('./logger')
-const { fileException, commandException } = require('../class/exceptions')
+const { fileException, commandException, dbException } = require('../class/exceptions')
 
 strOptions.fold.lineWidth = 0
 
@@ -142,20 +143,22 @@ const updateConf = data => {
     let writeBuf = lists.concat(rules)
     try {
       fs.writeFileSync(util.getMonitorRulePath(), yaml.stringify(changeToString(writeBuf)), 'utf8')
-      util.exec(`sed -i -e 's/"\\[/[/' -i -e 's/]\\"/]/' \`grep 'items' -rl ${util.getMonitorRulePath()} \``).then(data => {
-        return new Promise((resolve, reject) => {
+      util
+        .exec(`sed -i -e 's/"\\[/[/' -i -e 's/]\\"/]/' \`grep 'items' -rl ${util.getMonitorRulePath()} \``)
+        .then(data => {
           let { stdout, stderr, err } = data
           if (err || stderr) {
             warn(err || stderr)
             throw new commandException(err || stderr)
-            return
           }
           if (stdout == '') {
             info(`update monitor rule file: compelte`)
             resolve(`enable rules complete`)
           }
         })
-      })
+        .catch(err => {
+          throw err
+        })
     } catch (err) {
       reject(new fileException(err))
     }
