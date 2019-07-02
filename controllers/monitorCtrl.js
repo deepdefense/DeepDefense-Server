@@ -94,7 +94,7 @@ const getStats = async (req, res) => {
     filed = field.slice(0, -4)
     filed = filed == '@times' ? 'time' : filed
     sortOption[filed] = order
-    // debug(JSON.stringify(sortOption, null, '\t'))
+    // debug(JSON.stringify(queryOption, null, '\t'))
     let hits = await MonitorEvent.find(queryOption)
       .sort(sortOption)
       .skip(from)
@@ -119,19 +119,35 @@ const getStats = async (req, res) => {
       })
 
     /**get count stats */
-    let countResults = []
     let total = 0
     let priorities = ['Alert', 'Critical', 'Emergency', 'Error', 'infomational', 'Notice', 'Warning']
-    for (let priority of priorities) {
-      queryOption.priority = priority
-      let doc_count = await MonitorEvent.find(queryOption).countDocuments()
-      // debug(doc_count)
-      total = total + doc_count
-      countResults.push({
-        key: priority,
-        doc_count: doc_count
-      })
-    }
+    // for (let priority of priorities) {
+    //   queryOption.priority = priority
+    //   let doc_count = await MonitorEvent.find(queryOption).countDocuments()
+    //   // debug(doc_count)
+    //   total = total + doc_count
+    //   countResults.push({
+    //     key: priority,
+    //     doc_count: doc_count
+    //   })
+    // }
+    aggregateOption = [{
+      $group: {
+        _id: '$priority',
+        count: { $sum: 1 }
+      }
+    }]
+    if ()
+      const docs = await MonitorEvent.aggregate(aggregateOption);
+    docs.forEach(doc => {
+      total += doc.count
+    })
+    const countResults = docs.map(doc => {
+      return {
+        key: doc._id,
+        doc_count: doc.count
+      }
+    })
     info(`get status: complete`)
     // resSuc(res, {
     //   hits: hits,
@@ -207,8 +223,8 @@ const getListByRule = (req, res) => {
                   list: doc.list,
                   items: doc.items
                     ? doc.items.map(item => {
-                        return { data: item }
-                      })
+                      return { data: item }
+                    })
                     : [],
                   ctnGroups: rule.ctnGroups
                 })

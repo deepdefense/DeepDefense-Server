@@ -20,7 +20,9 @@ const MonitorEvent = new Schema(
   }
 )
 
-MonitorEvent.index({ time: -1, rule: 1 })
+MonitorEvent.index({ time: -1, priority: 1 })
+MonitorEvent.index({ rule: 1 })
+MonitorEvent.index({ priority: 1 })
 
 MonitorEvent.on('index', err => {
   info(err)
