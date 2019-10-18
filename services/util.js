@@ -100,7 +100,7 @@ const get = data => {
               reject(`unzip error ${err}`)
             }
             if (decoded) {
-              resolve(decoded.toStrign())
+              resolve(decoded.toString())
               return
             }
           })
